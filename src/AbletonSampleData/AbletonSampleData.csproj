@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>0.1.0-preview.1</Version>
+        <PackageId>AbletonSampleData</PackageId>
+        <Authors>Bamo16</Authors>
+        <Description>Reads what Ableton Live 12 knows about your samples: the warp markers and default clip in a .asd analysis file, and the tags in its XMP stores and file index. Unofficial.</Description>
+        <PackageTags>ableton;ableton-live;asd;warp;xmp;tags;audio</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageProjectUrl>https://github.com/Bamo16/AbletonSampleData</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Bamo16/AbletonSampleData</RepositoryUrl>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <!-- Nothing requires a doc comment; members without one are not a warning. -->
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="AbletonSampleData.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
+    </ItemGroup>
+</Project>

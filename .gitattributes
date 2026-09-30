@@ -1,0 +1,6 @@
+* text=auto eol=lf
+
+*.asd binary
+*.wav binary
+*.flac binary
+*.db binary
