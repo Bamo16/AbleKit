@@ -273,6 +273,9 @@ What Live does with files it did not write (observed, 2026-09-15 to 2026-10-01):
   transients were wrong: the sibling's.
 - **No transients is accepted too.** The same file with an empty transient list warped; Live
   showed no transients, offered no *Reset Transients*, and did not detect any itself.
+- **A file the writer made is accepted.** A vocal stem's file written from its instrumental's,
+  with the vocal's own transients, warped, played cleanly, and showed the vocal's waveform and
+  transients.
 - **Live did not rewrite any of these files** on loading them, nor on the grey-to-black pass when
   clips are moved, which is most likely its decoding cache.
 - **A marker list can be replaced in place.** Swapping one file's marker run and its id allocator

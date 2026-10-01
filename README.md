@@ -91,7 +91,7 @@ What the writer does:
 - **It replaces any analysis file beside the audio**, writing through a temporary file moved into
   place. The sibling can be the audio's own old file, to keep a warp after the audio was re-cut.
 
-Live accepts these files as its own and does not rewrite them, as far as it has been tried. See
+Live accepts these files as its own and leaves them as written, as far as it has been tried. See
 [Writing one](docs/analysis-file-format.md#writing-one) for what was tested.
 
 ## Read tags
