@@ -1,4 +1,6 @@
-namespace AbletonSampleData.Tests;
+using AbleKit.Analysis;
+
+namespace AbleKit.Tests.Analysis;
 
 public sealed class AnalysisFileTests
 {

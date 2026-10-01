@@ -1,4 +1,4 @@
-namespace AbletonSampleData;
+namespace AbleKit.Analysis;
 
 /// <summary>
 /// Draws the waveform overview the way Live does, bit for bit: a minimum and a maximum per channel

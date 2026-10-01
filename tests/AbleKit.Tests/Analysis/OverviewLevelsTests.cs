@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
+using AbleKit.Analysis;
 
-namespace AbletonSampleData.Tests;
+namespace AbleKit.Tests.Analysis;
 
 public sealed class OverviewLevelsTests
 {

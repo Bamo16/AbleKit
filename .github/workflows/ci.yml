@@ -16,4 +16,4 @@ jobs:
           global-json-file: global.json
       - run: dotnet tool restore
       - run: dotnet csharpier check .
-      - run: dotnet test --solution AbletonSampleData.slnx
+      - run: dotnet test --solution AbleKit.slnx

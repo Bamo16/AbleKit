@@ -1,6 +1,6 @@
 using Microsoft.Data.Sqlite;
 
-namespace AbletonSampleData;
+namespace AbleKit.Tags;
 
 /// <summary>
 /// Reads Live's file index, the SQLite database behind the browser, as a <see cref="FolderInfo"/>
@@ -44,7 +44,16 @@ public sealed class FileIndexReader(string indexFolder)
         ORDER BY tree.path
         """;
 
+    /// <summary>Every keyword on any file, the user's and Live's own.</summary>
+    private const string KnownKeywordsSql = """
+        SELECT DISTINCT mv.value
+        FROM metadata m
+        JOIN metadata_values mv ON mv.id = m.value_id
+        WHERE m.key IN ($keyword, $derived)
+        """;
+
     private static readonly long UserKeyword = FourCc("UKey");
+    private static readonly long DerivedKeyword = FourCc("Keyw");
 
     /// <summary>Where Live keeps its index unless told otherwise.</summary>
     public static string DefaultFolder { get; } =
@@ -75,6 +84,41 @@ public sealed class FileIndexReader(string indexFolder)
             when (ex is SqliteException or IOException or UnauthorizedAccessException)
         {
             return FolderInfo.Empty(folder);
+        }
+    }
+
+    /// <summary>
+    /// Every keyword Live knows from some file it has indexed, built-in and the user's own,
+    /// compared exactly. A keyword missing from it would become a new tag. A tag the user made but
+    /// put on no file is missing too, and the index can trail Live by a few seconds. Never throws;
+    /// an absent database reads as empty.
+    /// </summary>
+    public IReadOnlySet<string> ReadKnownKeywords()
+    {
+        try
+        {
+            if (FindDatabase() is not { } database)
+                return new HashSet<string>();
+
+            using var connection = Open(database);
+            using var command = connection.CreateCommand();
+            command.CommandText = KnownKeywordsSql;
+            command.Parameters.AddWithValue("$keyword", UserKeyword);
+            command.Parameters.AddWithValue("$derived", DerivedKeyword);
+
+            using var reader = command.ExecuteReader();
+
+            var keywords = new HashSet<string>(StringComparer.Ordinal);
+
+            while (reader.Read())
+                keywords.Add(reader.GetString(0));
+
+            return keywords;
+        }
+        catch (Exception ex)
+            when (ex is SqliteException or IOException or UnauthorizedAccessException)
+        {
+            return new HashSet<string>();
         }
     }
 

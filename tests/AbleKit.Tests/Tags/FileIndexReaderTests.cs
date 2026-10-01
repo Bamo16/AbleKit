@@ -1,6 +1,7 @@
+using AbleKit.Tags;
 using Microsoft.Data.Sqlite;
 
-namespace AbletonSampleData.Tests;
+namespace AbleKit.Tests.Tags;
 
 /// <summary>The reader against a database laid out like Live 12's, holding only the tables it reads.</summary>
 public sealed class FileIndexReaderTests : IDisposable
@@ -17,7 +18,7 @@ public sealed class FileIndexReaderTests : IDisposable
 
     private readonly string _index = Path.Combine(
         Path.GetTempPath(),
-        "AbletonSampleData.Tests",
+        "AbleKit.Tests",
         Guid.NewGuid().ToString("n")
     );
 
@@ -67,6 +68,33 @@ public sealed class FileIndexReaderTests : IDisposable
         }
 
         Assert.Empty(new FileIndexReader(_index).Read(_root).Entries);
+    }
+
+    [Fact]
+    public void Known_keywords_are_the_users_and_Lives_own_on_any_file()
+    {
+        using (var db = Create("Live-files-12300.db"))
+        {
+            var root = Place(db, _root);
+            var a = File(db, root, "a.flac");
+            var b = File(db, File(db, 0, "Elsewhere"), "b.adg");
+
+            Tag(db, a, UserKeyword, "Key|A");
+            Tag(db, b, UserKeyword, "Key|A");
+            Tag(db, b, DerivedKeyword, "Drums|Cymbal|Crash");
+            Tag(db, b, FourCc("Name"), "not a keyword");
+        }
+
+        Assert.Equal(
+            ["Drums|Cymbal|Crash", "Key|A"],
+            new FileIndexReader(_index).ReadKnownKeywords().Order(StringComparer.Ordinal)
+        );
+    }
+
+    [Fact]
+    public void No_index_knows_no_keywords()
+    {
+        Assert.Empty(new FileIndexReader(Path.Combine(_index, "missing")).ReadKnownKeywords());
     }
 
     [Fact]

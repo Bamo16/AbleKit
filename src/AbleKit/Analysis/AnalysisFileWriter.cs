@@ -1,8 +1,8 @@
 using System.Buffers.Binary;
 using System.Runtime.InteropServices;
-using static AbletonSampleData.AnalysisFileParser;
+using static AbleKit.Analysis.AnalysisFileParser;
 
-namespace AbletonSampleData;
+namespace AbleKit.Analysis;
 
 /// <summary>
 /// Writes analysis files Live accepts as its own, so a sample arrives in Live already warped, without

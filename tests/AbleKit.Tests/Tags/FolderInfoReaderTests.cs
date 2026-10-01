@@ -1,10 +1,12 @@
-namespace AbletonSampleData.Tests;
+using AbleKit.Tags;
+
+namespace AbleKit.Tests.Tags;
 
 public sealed class FolderInfoReaderTests : IDisposable
 {
     private readonly string _root = Path.Combine(
         Path.GetTempPath(),
-        "AbletonSampleData.Tests",
+        "AbleKit.Tests",
         Guid.NewGuid().ToString("n")
     );
 

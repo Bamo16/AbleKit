@@ -1,11 +1,13 @@
-# AbletonSampleData
+# AbleKit
 
-A .NET library that reads what Ableton Live 12 knows about your samples:
+**Read and write Ableton Live's files from .NET.** AbleKit is a C# library for what Ableton Live 12
+keeps about the files in your library:
 
 - **the analysis file** (`.asd`) beside each sample: its warp markers, warp mode, time signature,
   default clip, transients and waveform overview, which it can also write;
 - **the tags** in each folder's `Ableton Folder Info` XMP store, which it can also write;
-- **the tags** in Live's own file index, the database behind the browser.
+- **the tags** in Live's own file index, the database behind the browser, and every tag Live
+  knows.
 
 > [!CAUTION]
 > **Unofficial.** Not made, endorsed or supported by Ableton. The formats are undocumented and were
@@ -19,15 +21,16 @@ the only public description of the Live 12 format.
 ## Install
 
 ```
-dotnet add package AbletonSampleData --prerelease
+dotnet add package AbleKit --prerelease
 ```
 
-.NET 10. Versions below 1.0 may change the API between releases.
+.NET 10. Versions below 1.0 may change the API between releases. Analysis files are in the
+`AbleKit.Analysis` namespace, tags in `AbleKit.Tags`.
 
 ## Read a warp
 
 ```csharp
-using AbletonSampleData;
+using AbleKit.Analysis;
 
 if (AnalysisFile.TryRead(@"C:\Samples\Break.wav.asd", out var analysis))
 {
@@ -97,6 +100,8 @@ Live accepts these files as its own and leaves them as written, as far as it has
 ## Read tags
 
 ```csharp
+using AbleKit.Tags;
+
 var folder = @"C:\Samples\Drums";
 
 // The XMP store in the folder: the files directly in it, with the keywords you have hidden.
@@ -109,11 +114,23 @@ if (fromIndex.TryGet(@"C:\Samples\Drums\Kick.wav", out var tags))
     Console.WriteLine(string.Join(", ", tags.Keywords)); // Drums|Kick, Key|C♯, …
 ```
 
-Keywords are raw, as Live writes them: `Category|Value`, with sharps as `♯` (U+266F). When the two
-sources disagree, the index is what Live's browser shows; the XMP can lag behind it, sometimes
-indefinitely.
+Keywords are raw, as Live writes them: `Category|Value`, or deeper for Live's nested tags
+(`Drums|Cymbal|Crash`). When the two sources disagree, the index is what Live's browser shows; the
+XMP can lag behind it, sometimes indefinitely.
 
 ## Write tags
+
+Live treats any spelling it has not seen as a new tag: `Key|C#` is not Live's `Key|C♯`, and stays in
+the browser until removed by hand. Check keywords against what Live knows before writing them:
+
+```csharp
+var known = new FileIndexReader(FileIndexReader.DefaultFolder).ReadKnownKeywords();
+var newTags = keywords.Where(keyword => !known.Contains(keyword)).ToList();
+// Ask before writing these. KeyTags.Tonics and KeyTags.Modes hold Live's own key spellings.
+```
+
+`ReadKnownKeywords` knows every keyword on a file Live has indexed, built-in and your own. A tag you
+made but put on no file is missing from it.
 
 ```csharp
 var outcome = new FolderInfoWriter().Apply(
@@ -140,9 +157,8 @@ What the writer does:
 - **It replaces a file's keywords** with the ones given. It does not add to them. Read the entry
   first and merge if you want to keep what is there.
 - **It leaves every other entry alone**, in its place, and never touches hidden keywords.
-- **It writes all or nothing.** A keyword that is not `Category|Value`, or a key spelt in a way Live
-  does not use (`Key|C#`, `Key|Db`), rejects the whole write. Live would otherwise create a second,
-  permanent tag.
+- **It writes all or nothing.** A keyword that is not `Category|Value` rejects the whole write.
+  Any well-formed keyword is written, including one Live does not know yet.
 - **It refuses to overwrite a store Live changed** after it was read, and writes through a
   temporary file swapped into place. That narrows the race with Live; it cannot close it.
 - **It writes bytes Live's way**: no BOM, LF line endings, three-space indents, and a new store
@@ -154,15 +170,16 @@ default and optional backups, see [LiveTagger](https://github.com/17cupsofcoffee
 
 ## Compared with other projects
 
-| | this | [LiveTagger](https://github.com/17cupsofcoffee/LiveTagger) | [AbletonParsing](https://github.com/DBraun/AbletonParsing) | [ableton-asd-parser](https://github.com/Verbalize-public/ableton-asd-parser) |
-|---|---|---|---|---|
-| Language | C# library | Rust command line | Python | Python |
-| Live 12 `.asd` | reads, writes | | Live 9 and 10 | reads |
-| Warp mode, default clip, saved flag | yes | | | |
-| XMP tags | reads, writes | reads, writes | | |
-| Hidden keywords | reads | | | |
-| Live's file index | reads | | | |
-| Licence | MIT | MIT | MIT | none |
+| | AbleKit | [AbleSharp](https://github.com/theokyr/AbleSharp) | [LiveTagger](https://github.com/17cupsofcoffee/LiveTagger) | [AbletonParsing](https://github.com/DBraun/AbletonParsing) | [ableton-asd-parser](https://github.com/Verbalize-public/ableton-asd-parser) |
+|---|---|---|---|---|---|
+| Language | C# library | C# library | Rust command line | Python | Python |
+| Live sets (`.als`) | | reads, writes | | | |
+| Live 12 `.asd` | reads, writes | | | Live 9 and 10 | reads |
+| Warp mode, default clip, saved flag | yes | | | | |
+| XMP tags | reads, writes | | reads, writes | | |
+| Hidden keywords | reads | | | | |
+| Live's file index | reads | | | | |
+| Licence | MIT | MIT | MIT | MIT | none |
 
 ## Tested on
 

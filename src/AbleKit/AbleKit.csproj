@@ -1,14 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Version>0.1.0-preview.1</Version>
-        <PackageId>AbletonSampleData</PackageId>
+        <PackageId>AbleKit</PackageId>
         <Authors>Bamo16</Authors>
-        <Description>Reads what Ableton Live 12 knows about your samples: the warp markers, default clip and transients in a .asd analysis file, and the tags in its XMP stores and file index. Writes analysis files, so a stem arrives in Live already warped. Unofficial.</Description>
-        <PackageTags>ableton;ableton-live;asd;warp;xmp;tags;audio</PackageTags>
+        <!-- AbleKit does not say Ableton, so the title, the description's opening and the tags carry it for NuGet search. -->
+        <Title>AbleKit: Ableton Live file formats for .NET</Title>
+        <Description>Read and write Ableton Live 12's files from .NET: the warp markers, default clip, transients and waveform in a .asd analysis file, so a stem can arrive in Live already warped, and the tags in Live's XMP stores and file index. Unofficial; not affiliated with Ableton.</Description>
+        <PackageTags>ableton;ableton-live;live;live12;asd;warp;warp-markers;transients;samples;sample-library;xmp;tags;audio;music-production;daw</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageProjectUrl>https://github.com/Bamo16/AbletonSampleData</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/Bamo16/AbletonSampleData</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/Bamo16/AbleKit</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Bamo16/AbleKit</RepositoryUrl>
         <!-- A public library: every public member needs a doc comment, and CS1591 fails the build without one. -->
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <IncludeSymbols>true</IncludeSymbols>
@@ -16,7 +18,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="AbletonSampleData.Tests" />
+        <InternalsVisibleTo Include="AbleKit.Tests" />
     </ItemGroup>
 
     <ItemGroup>

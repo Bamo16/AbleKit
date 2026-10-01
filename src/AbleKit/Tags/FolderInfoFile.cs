@@ -1,4 +1,4 @@
-namespace AbletonSampleData;
+namespace AbleKit.Tags;
 
 /// <summary>Finds a folder's XMP store, so the reader and the writer agree on which of several it is.</summary>
 internal static class FolderInfoFile

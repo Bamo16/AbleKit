@@ -1,4 +1,4 @@
-namespace AbletonSampleData.Tests;
+namespace AbleKit.Tests;
 
 /// <summary>The author's own library, which the real-data tests read when it is present.</summary>
 internal static class RealLibrary

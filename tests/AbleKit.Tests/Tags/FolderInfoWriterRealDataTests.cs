@@ -1,13 +1,14 @@
 using System.Xml.Linq;
+using AbleKit.Tags;
 
-namespace AbletonSampleData.Tests;
+namespace AbleKit.Tests.Tags;
 
 /// <summary>The writer against the tag store Ableton actually wrote, only ever on a copy.</summary>
 public sealed class FolderInfoWriterRealDataTests : IDisposable
 {
     private readonly string _root = Path.Combine(
         Path.GetTempPath(),
-        "AbletonSampleData.Tests",
+        "AbleKit.Tests",
         Guid.NewGuid().ToString("n")
     );
 

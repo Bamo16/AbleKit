@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace AbletonSampleData;
+namespace AbleKit.Analysis;
 
 /// <summary>
 /// Reads the head and warp section of an analysis file, which is undocumented and described by a

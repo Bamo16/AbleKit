@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace AbletonSampleData;
+namespace AbleKit.Analysis;
 
 /// <summary>What an analysis file, the <c>.asd</c> beside a sample, records about how Live warps it.</summary>
 /// <param name="IsWarped">The clip's Warp switch, which is on even for samples nobody has warped.</param>

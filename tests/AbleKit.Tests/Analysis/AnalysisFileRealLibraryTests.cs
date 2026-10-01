@@ -1,4 +1,6 @@
-namespace AbletonSampleData.Tests;
+using AbleKit.Analysis;
+
+namespace AbleKit.Tests.Analysis;
 
 /// <summary>The reader against every <c>.asd</c> the real library holds.</summary>
 public sealed class AnalysisFileRealLibraryTests

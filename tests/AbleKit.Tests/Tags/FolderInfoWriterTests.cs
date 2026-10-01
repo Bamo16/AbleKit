@@ -1,13 +1,14 @@
 using System.Text;
 using System.Xml.Linq;
+using AbleKit.Tags;
 
-namespace AbletonSampleData.Tests;
+namespace AbleKit.Tests.Tags;
 
 public sealed class FolderInfoWriterTests : IDisposable
 {
     private readonly string _root = Path.Combine(
         Path.GetTempPath(),
-        "AbletonSampleData.Tests",
+        "AbleKit.Tests",
         Guid.NewGuid().ToString("n")
     );
 
@@ -80,26 +81,27 @@ public sealed class FolderInfoWriterTests : IDisposable
     }
 
     [Fact]
-    public void A_key_Live_does_not_spell_that_way_is_refused()
+    public void A_keyword_Live_does_not_know_yet_is_written_as_given()
     {
-        // Live would register a second, permanent "F#".
-        var outcome = _writer.Apply(_root, [Assign("a.flac", "Key|F#", "Key|Major")]);
+        // Live spells this key C♯; a user may still want a tag of their own.
+        var outcome = _writer.Apply(_root, [Assign("a.flac", "Key|C#", "Mood|Wistful")]);
 
-        // Rejected, not Stale: a bad keyword is not fixed by retrying.
-        var rejected = Assert.IsType<TagWriteOutcome.Rejected>(outcome);
-        Assert.Contains("Key|F#", rejected.Error);
-        Assert.False(Directory.Exists(Path.Combine(_root, "Ableton Folder Info")));
+        Assert.IsType<TagWriteOutcome.Written>(outcome);
+        Assert.True(_reader.Read(_root).TryGet("a.flac", out var tags));
+        Assert.Equal(["Key|C#", "Mood|Wistful"], tags.Keywords);
     }
 
     [Fact]
-    public void One_bad_keyword_stops_the_whole_write()
+    public void One_malformed_keyword_stops_the_whole_write()
     {
         var outcome = _writer.Apply(
             _root,
-            [Assign("good.flac", "Key|A", "Key|Minor"), Assign("bad.flac", "Key|H", "Key|Major")]
+            [Assign("good.flac", "Key|A", "Key|Minor"), Assign("bad.flac", "Key|", "Key|Major")]
         );
 
-        Assert.IsType<TagWriteOutcome.Rejected>(outcome);
+        // Rejected, not Stale: a bad keyword is not fixed by retrying.
+        var rejected = Assert.IsType<TagWriteOutcome.Rejected>(outcome);
+        Assert.Contains("'Key|'", rejected.Error);
         Assert.False(Directory.Exists(Path.Combine(_root, "Ableton Folder Info")));
     }
 
@@ -141,30 +143,17 @@ public sealed class FolderInfoWriterTests : IDisposable
         );
     }
 
-    [Fact]
-    public void Every_tonic_Live_knows_is_accepted_and_nothing_else_is()
-    {
-        // Taken from the 451 key keywords across the real roots: sharps as U+266F, no flats.
-        Assert.Equal(12, FolderInfoWriter.Tonics.Count);
-
-        Assert.All(
-            FolderInfoWriter.Tonics,
-            t => Assert.True(FolderInfoWriter.IsWellFormed($"Key|{t}"))
-        );
-
-        Assert.False(FolderInfoWriter.IsWellFormed("Key|Bb"));
-        Assert.False(FolderInfoWriter.IsWellFormed("Key|A♭"));
-        Assert.False(FolderInfoWriter.IsWellFormed("Key|C#"));
-    }
-
     [Theory]
     [InlineData("Mood|Dark", true)]
+    [InlineData("Key|C#", true)]
+    [InlineData("Drums|Cymbal|Crash", true)]
     [InlineData("Mood", false)]
     [InlineData("Mood|", false)]
     [InlineData("|Dark", false)]
-    [InlineData("Mood|Dark|Red", false)]
+    [InlineData("Drums|Cymbal|", false)]
     [InlineData(" Mood|Dark", false)]
-    public void Any_other_keyword_needs_only_a_category_and_a_value(string keyword, bool accepted)
+    [InlineData("Mood|Dark ", false)]
+    public void A_keyword_needs_a_category_and_at_least_one_value(string keyword, bool accepted)
     {
         Assert.Equal(accepted, FolderInfoWriter.IsWellFormed(keyword));
     }

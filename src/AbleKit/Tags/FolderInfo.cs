@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace AbletonSampleData;
+namespace AbleKit.Tags;
 
 /// <summary>The keywords Live holds for the files in one folder, from its XMP store or Live's index.</summary>
 /// <param name="folder">The folder the entries' paths are relative to.</param>

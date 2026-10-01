@@ -7,7 +7,7 @@ clip starts and ends.
 
 Ableton has never documented the format. This page describes what is known about the Live 12
 version, how it was worked out, and how confident each part is. It is the reference behind the
-[AbletonSampleData](../README.md) reader and writer, but nothing here depends on that library.
+[AbleKit](../README.md) reader and writer, but nothing here depends on that library.
 
 **Unofficial.** None of this comes from Ableton, and Ableton owes it no stability. A Live update
 can change any of it.
@@ -250,7 +250,7 @@ With the first marker at 0 s and beat 0, this is the hidden handle alone: a warp
 
 ## Writing one
 
-[AbletonSampleData](../README.md)'s `AnalysisFileWriter` writes a complete file for audio Live
+[AbleKit](../README.md)'s `AnalysisFileWriter` writes a complete file for audio Live
 has not seen, borrowing everything it cannot compute from a **sibling**: another stem of the same
 song, warped and saved. It keeps the sibling's head, schema, clip and warp, and replaces what comes
 from the audio: the overview, the transients and `OriginalFileSize`. It switches `HasUserOnsets`

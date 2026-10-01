@@ -10,7 +10,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\AbletonSampleData\AbletonSampleData.csproj" />
+        <ProjectReference Include="..\..\src\AbleKit\AbleKit.csproj" />
     </ItemGroup>
 
     <ItemGroup>

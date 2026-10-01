@@ -1,4 +1,6 @@
-namespace AbletonSampleData.Tests;
+using AbleKit.Analysis;
+
+namespace AbleKit.Tests.Analysis;
 
 /// <summary>
 /// One stem's sidecar before and after <em>Save Default Clip</em>, cut short after the warp

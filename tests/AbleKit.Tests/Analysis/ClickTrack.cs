@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.IO.Compression;
 
-namespace AbletonSampleData.Tests;
+namespace AbleKit.Tests.Analysis;
 
 /// <summary>
 /// A 16-second click track Live analysed for the fixtures, kept Brotli-compressed, and its samples

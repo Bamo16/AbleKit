@@ -1,4 +1,6 @@
-namespace AbletonSampleData.Tests;
+using AbleKit.Tags;
+
+namespace AbleKit.Tests.Tags;
 
 /// <summary>Ableton's own index, asserted against the real database on this machine.</summary>
 public sealed class FileIndexReaderRealLibraryTests
@@ -29,6 +31,33 @@ public sealed class FileIndexReaderRealLibraryTests
         Assert.True(Read(root).TryGet(entry.RelativePath, out var byRelative));
         Assert.True(Read(root).TryGet(Path.Combine(root, entry.RelativePath), out var byAbsolute));
         Assert.Equal(byRelative.RelativePath, byAbsolute.RelativePath);
+    }
+
+    [Fact]
+    public void Live_knows_every_key_tag_as_KeyTags_spells_it()
+    {
+        Assert.SkipUnless(
+            Directory.Exists(FileIndexReader.DefaultFolder),
+            "Live's index is not present on this machine."
+        );
+
+        var known = new FileIndexReader(FileIndexReader.DefaultFolder).ReadKnownKeywords();
+
+        Assert.All(
+            KeyTags.Tonics.Concat(KeyTags.Modes),
+            value => Assert.Contains($"Key|{value}", known)
+        );
+    }
+
+    [Theory]
+    [MemberData(nameof(Roots))]
+    public void Every_keyword_on_a_real_root_is_a_known_one(string root)
+    {
+        SkipUnlessPresent(root);
+
+        var known = new FileIndexReader(FileIndexReader.DefaultFolder).ReadKnownKeywords();
+
+        Assert.All(Read(root).Entries.SelectMany(e => e.Keywords), k => Assert.Contains(k, known));
     }
 
     [Fact]

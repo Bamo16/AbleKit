@@ -2,7 +2,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace AbletonSampleData;
+namespace AbleKit.Tags;
 
 /// <summary>
 /// Writes keywords into a folder's <c>Ableton Folder Info\&lt;uuid&gt;.xmp</c>, alongside whatever
@@ -15,33 +15,6 @@ public sealed class FolderInfoWriter
     private static readonly XNamespace AblFr = "https://ns.ableton.com/xmp/fs-resources/1.0/";
     private static readonly XNamespace Dc = "http://purl.org/dc/elements/1.1/";
     private static readonly XNamespace Xmp = "http://ns.adobe.com/xap/1.0/";
-
-    /// <summary>
-    /// Live's built-in <c>Key|</c> tonics: sharps only, spelled with U+266F. An ASCII '#' silently
-    /// makes a separate user tag that has to be removed by hand.
-    /// </summary>
-    public static readonly IReadOnlySet<string> Tonics = new HashSet<string>(StringComparer.Ordinal)
-    {
-        "C",
-        "C♯",
-        "D",
-        "D♯",
-        "E",
-        "F",
-        "F♯",
-        "G",
-        "G♯",
-        "A",
-        "A♯",
-        "B",
-    };
-
-    /// <summary>Live's built-in <c>Key|</c> modes.</summary>
-    public static readonly IReadOnlySet<string> Modes = new HashSet<string>(StringComparer.Ordinal)
-    {
-        "Major",
-        "Minor",
-    };
 
     /// <summary>
     /// The exact bytes Ableton writes: no XML declaration, no BOM, LF line endings, three-space
@@ -58,7 +31,9 @@ public sealed class FolderInfoWriter
 
     /// <summary>
     /// Applies keywords to files under <paramref name="folder"/>, leaving every other entry
-    /// and its position alone, or nothing at all unless every keyword is well-formed.
+    /// and its position alone, or nothing at all unless every keyword is well-formed. A keyword
+    /// Live does not know yet becomes a new tag; check against
+    /// <see cref="FileIndexReader.ReadKnownKeywords"/> first to catch one made by accident.
     /// </summary>
     public TagWriteOutcome Apply(string folder, IReadOnlyList<TagAssignment> assignments)
     {
@@ -159,17 +134,13 @@ public sealed class FolderInfoWriter
     }
 
     /// <summary>
-    /// Whether a keyword has Live's shape, <c>Category|Value</c>; a <c>Key|</c> value must also be
-    /// one of Live's own, since any other spelling makes a second tag.
+    /// Whether a keyword has Live's shape: <c>Category|Value</c>, or deeper for Live's nested tags
+    /// such as <c>Drums|Cymbal|Crash</c>, with no part empty or padded with spaces. Says nothing
+    /// about whether Live knows the keyword.
     /// </summary>
     public static bool IsWellFormed(string keyword) =>
-        keyword.Split('|') switch
-        {
-            ["Key", var value] => Tonics.Contains(value) || Modes.Contains(value),
-            [{ Length: > 0 } category, { Length: > 0 } value] => category.Trim() == category
-                && value.Trim() == value,
-            _ => false,
-        };
+        keyword.Split('|') is [_, _, ..] parts
+        && parts.All(part => part.Length > 0 && part.Trim() == part);
 
     /// <summary>
     /// Reads the file, or null if Ableton is mid-write — which calls for a retry, never a rebuild.

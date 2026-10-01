@@ -1,8 +1,0 @@
-<Solution>
-    <Folder Name="/src/">
-        <Project Path="src/AbletonSampleData/AbletonSampleData.csproj" />
-    </Folder>
-    <Folder Name="/tests/">
-        <Project Path="tests/AbletonSampleData.Tests/AbletonSampleData.Tests.csproj" />
-    </Folder>
-</Solution>

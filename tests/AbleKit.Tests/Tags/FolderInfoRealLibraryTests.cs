@@ -1,4 +1,6 @@
-namespace AbletonSampleData.Tests;
+using AbleKit.Tags;
+
+namespace AbleKit.Tests.Tags;
 
 /// <summary>The XMP contract, asserted against both real roots.</summary>
 public sealed class FolderInfoRealLibraryTests

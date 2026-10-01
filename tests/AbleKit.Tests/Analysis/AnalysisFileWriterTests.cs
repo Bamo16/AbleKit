@@ -1,10 +1,12 @@
-namespace AbletonSampleData.Tests;
+using AbleKit.Analysis;
+
+namespace AbleKit.Tests.Analysis;
 
 public sealed class AnalysisFileWriterTests : IDisposable
 {
     private readonly string _root = Path.Combine(
         Path.GetTempPath(),
-        "AbletonSampleData.Tests",
+        "AbleKit.Tests",
         Guid.NewGuid().ToString("n")
     );
 

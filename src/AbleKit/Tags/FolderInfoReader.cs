@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 
-namespace AbletonSampleData;
+namespace AbleKit.Tags;
 
 /// <summary>
 /// Reads a folder's <c>Ableton Folder Info\&lt;uuid&gt;.xmp</c>, which holds the keywords of the files
