@@ -2,7 +2,7 @@ namespace AbletonSampleData.Tests;
 
 /// <summary>
 /// One stem's sidecar before and after <em>Save Default Clip</em>, cut short after the warp
-/// section, and a Live 12 sidecar with Loop on from DBraun/AbletonParsing.
+/// section, a Live 12 sidecar with Loop on from DBraun/AbletonParsing, and click tracks' sidecars.
 /// </summary>
 public sealed class AnalysisFileParserTests
 {
@@ -29,6 +29,28 @@ public sealed class AnalysisFileParserTests
     public void With_loop_on_the_clip_starts_at_the_offset_from_the_loop_and_ends_at_its_end_marker()
     {
         Assert.Equal(new DefaultClip(0, 5), Read("sidecar-loop-on.asd").DefaultClip);
+    }
+
+    [Fact]
+    public void A_mono_sidecar_reads_like_a_stereo_one()
+    {
+        // Its head ends in 2 bytes where a stereo file's ends in 4, so the saved byte sits earlier.
+        var warp = Read("sidecar-mono.asd");
+
+        Assert.Equal(new DefaultClip(0, 32), warp.DefaultClip);
+        Assert.Equal([0, 32, 32.03125], warp.Markers.Select(marker => marker.Beat));
+        Assert.Equal(5513, warp.Overview?.Peaks.Count);
+    }
+
+    [Fact]
+    public void The_hidden_marker_sets_the_tempo_past_the_last_visible_one()
+    {
+        // A click track that speeds from 120 to 140 BPM at 8 s, with visible markers at 0 s and
+        // 8 s only. The 140 was set by dragging a later click onto the grid.
+        var warp = Read("sidecar-tail-tempo.asd");
+
+        Assert.Equal(120, warp.TempoAt(4)!.Value, 3);
+        Assert.Equal(140, warp.TempoAt(12)!.Value, 1);
     }
 
     [Fact]

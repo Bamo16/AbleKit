@@ -53,11 +53,13 @@ Byte order is **little-endian**, except the lengths of class names, which are bi
 | 2 | `06 49` in every file (measured, 947 of 947) |
 | 4 | int32 *n* |
 | 4 × *n* | *n* int32 values rising from 0 to the audio's total sample count (measured). What they mark is **not known**: not the transients, and not a FLAC seek table, since a WAV's file has one too |
-| 20 | five int32s, `0, 0, 100, 4, 0` in every file (measured, 947 of 947) |
+| 12 | three int32s, `0, 0, 100` in every file (measured, 947 of 947) |
+| 4 | int32 *m*: 4 in every stereo file (947 of 947), 2 in a mono one (observed, 2026-10-01) |
+| *m* | *m* zero bytes, probably two per channel |
 | 1 | **the default clip saved byte**: 0 until *Save Default Clip* is pressed, 1 after (observed). It is 1 on exactly the 936 files with warp markers and 0 on the other 11 (measured) |
 
 The saved byte is the cheapest way to tell whether a sample has been warped and saved: it sits at
-offset `6 + 4n + 20`, and no schema is needed to reach it. A careful reader checks that the chunk
+offset `6 + 4n + 16 + m`, which is `6 + 4n + 20` in stereo, and no schema is needed to reach it. A careful reader checks that the chunk
 magic follows it.
 
 ## Chunks
@@ -136,24 +138,32 @@ Units of **beats** are positions on Live's grid, counted from the sample's beat 
 | `HiddenLoopStart`, `HiddenLoopEnd` | float64, beats | the loop brace, remembered while Loop is off (measured on the DBraun pair) |
 | `OutMarker` | float64, beats | the end marker in both Loop states on the DBraun pair. In the library it disagrees with `LoopEnd` on 244 of 845 files, all Loop off. Read `LoopEnd` for the clip's end |
 | `Sync` | bool | guessed: follows the set's tempo. True everywhere |
-| `HiQ` | bool | guessed: high-quality interpolation |
-| `Fade` | bool | guessed: clip edge fades |
+| `HiQ` | bool | the HiQ switch (observed, 2026-10-01). Off on 12 of 981 files |
+| `Fade` | bool | the Fade switch (observed, 2026-10-01). Off in every library file |
 | `IsWarped` | bool | the clip's Warp switch. **Says nothing on its own**: it is true on files nobody has warped (observed) |
-| `SampleVolume` | float32, linear | clip gain (measured as whole decibels on the four files where it is not 1.0) |
-| `VelocityAmount`, `PitchCoarse`, `PitchFine` | float32 | guessed by name; 0 everywhere |
+| `SampleVolume` | float32, linear | clip gain: 20 × log₁₀ of it is the clip view's dB. Whole decibels, −8 to +5, on the five of 981 files where it is not 1.0 (measured, 2026-10-01) |
+| `PitchCoarse`, `PitchFine` | float32 | transpose in semitones and detune in cents, the two boxes under the Pitch knob (observed, 2026-10-01). 0 in all 981 library files |
+| `VelocityAmount` | float32 | guessed by name: a Session clip's launch velocity. 0 everywhere |
 | `ColorIndex` | int32 | clip colour; −1 before the first save (observed) |
 | `LaunchMode`, `LaunchQuantisation` | int32 | guessed by name |
 | `LoopOn` | bool | the Loop switch (measured: the only field that differs within the DBraun pair) |
+
+**Reverse is not a field.** Live renders a reversed copy of the sample (`… R.wav`, in the set's
+`Samples/Processed/Reverse`) and points the clip at it, so a default clip saved with Reverse on
+lands in that copy's sidecar, not the original's (observed, 2026-10-01).
+
+**Clip envelopes are not part of it.** No field holds automation, so an envelope drawn in the clip
+view lives only in the set, and *Save Default Clip* does not keep it (from the schema).
 
 ### The warp
 
 | field | type | meaning |
 |---|---|---|
-| `WarpMode` | int32 | 0 Beats, 1 Tones, 2 Texture, 3 Re-Pitch, 4 Complex, 5 REX, 6 Complex Pro. **Only 4 and 6 have been seen** (946 and 1 files); the other names follow Live's menu order and are guessed |
-| `TransientResolution` … `ComplexProEnvelope` | int32, float32 | the warp modes' parameters; one value each across the library, guessed to be Live's defaults |
+| `WarpMode` | int32 | 0 Beats, 1 Tones, 2 Texture, 3 Re-Pitch, 4 Complex, 5 REX, 6 Complex Pro. **0, 2, 3, 4 and 6 have been seen** (4 on 978 of 981 files; 0, 2 and 3 on fixtures set by hand, 2026-10-01); 1 and 5 follow Live's menu order and are guessed |
+| `TransientResolution` … `ComplexProEnvelope` | int32, float32 | the warp modes' parameters, kept for every mode whichever one is chosen. `GranularityTexture` and `FluctuationTexture` are Texture's Grain Size and Flux (observed, 2026-10-01); the rest are named after their controls (Beats' Preserve, loop mode and Envelope; Tones' Grain Size; Complex Pro's Formants and Envelope). One value each across the library, Live's defaults |
 | `TimeSignature` | numerator float32, denominator float32, `Time` float64 | 4/4 at 0 everywhere |
 | `WarpMarkers` | list of `WarpMarker` | see below |
-| `MarkersGenerated` | bool | guessed: the markers came from Live's auto-warp. True on 3 files, each with 2 markers |
+| `MarkersGenerated` | bool | guessed: the markers came from Live's auto-warp. True on 9 of 981 files |
 
 ### Transients
 
@@ -178,8 +188,8 @@ found says what makes Live fill it in. Do not treat it as a tempo source.
 | field | type | meaning |
 |---|---|---|
 | `ExtraLength` | int32 | 0 everywhere |
-| `OriginalFileSize` | int32, bytes | the audio's size when it was analysed (measured: matches on 828 of 845). Live does not re-analyse a file whose audio later changed length |
-| `OverView.OverViewLevels` | list of float16 arrays | **the waveform**: a minimum and a maximum per channel per bin, interleaved, as float16. Checked against the decoded audio to within 0.0005 at every level (measured) |
+| `OriginalFileSize` | int32, bytes | the audio's size when it was analysed (measured: matches on 952 of 969, 2026-10-01). Live does not re-analyse a file whose audio later changed: the other 17 still draw the waveform of audio since replaced |
+| `OverView.OverViewLevels` | list of float16 arrays | **the waveform**: a minimum and a maximum per channel per bin, interleaved (min₀ max₀ min₁ max₁), as float16 **truncated toward zero**. Each coarser level is the minimum and maximum over the finer level's bins. Reproduced bit for bit from the decoded audio, a WAV and a 24-bit FLAC, at every level (measured, 2026-10-01) |
 | `OverView.SamplesPerBinLog2` | int32 | level *k*'s bin is 2^(`SamplesPerBinLog2` × (*k* + 1)) samples. 7 up to 379 s of audio, 8 from 387 s |
 | `OverView.ChannelCount`, `.Version` | int32 | 2 and 2 everywhere |
 
@@ -196,9 +206,14 @@ start) and **`BeatTime`** (the grid position it is pinned to). That is all.
   `(beat₂ − beat₁) / (sec₂ − sec₁) × 60` BPM.
 - **Seconds are absolute into the audio.** A marker list copied into the file of another,
   sample-aligned file warps it identically (observed).
-- **Live adds a hidden marker 1/32 beat after the last one.** A warp with one marker placed by
-  hand, the commonest kind, is stored as two, and the hidden one carries the tempo past the last
-  visible marker. 926 of the 936 warped files end in one (measured). Live's UI does not show it.
+- **Live adds a hidden marker 1/32 beat after the last one.** A warp with one marker placed by hand,
+  the commonest kind (812 of 959 warped files, measured 2026-10-01), is stored as two, and the
+  hidden one carries the tempo past the last visible marker. 926 of the 936 warped files end in one
+  (measured). Live's UI does not show it. Patching it changes what Live plays (observed,
+  2026-10-01): past the last visible marker, and, with one visible marker, on both sides of it.
+  Dragging a transient past the last visible marker onto the grid moves the hidden marker rather
+  than adding one. Typing a *Seg. BPM* sets the segment ending at the selected marker and leaves the
+  hidden one where it was, so the tempo past the last marker does not follow.
 - **Nothing is written until *Save Default Clip*.** Pressing Warp and warping a sample fully left
   the file byte for byte unchanged; the save wrote the markers, the clip, the colour and the saved
   byte, and rewrote the files of every sample warped with it as a group (observed). A file without
@@ -237,9 +252,11 @@ treats a file it did not write, from editing existing files (observed, 2026-09-1
 ## What is not known
 
 - What the head's table of sample positions marks.
-- The meaning of the fixed fields guessed above, and the warp mode numbers other than 4 and 6.
+- The meaning of the fixed fields guessed above, and the warp mode numbers other than 0, 3, 4 and 6
+  (Beats, Re-Pitch, Complex and Complex Pro; Beats and Re-Pitch observed 2026-10-01).
 - Whether `IsWarped` is ever false in practice.
-- Whether a file with no overview or no transients is accepted.
+- Whether a file with someone else's transients plays and warps correctly. A file with no overview
+  and no transients is not accepted: Live re-analyses it and drops its warp (observed, 2026-10-01).
 - Anything about Live 11 and earlier. DBraun/AbletonParsing reads Live 9 and 10, whose files are
   laid out differently.
 

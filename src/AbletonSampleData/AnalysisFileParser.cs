@@ -24,7 +24,6 @@ internal static class AnalysisFileParser
 
     private const int HeadCountOffset = 2;
     private const int HeadTableOffset = 6;
-    private const int HeadTrailerLength = 20;
     private const int ChunkPreambleLength = 9;
 
     private const int MaxTypeCount = 256;
@@ -46,6 +45,7 @@ internal static class AnalysisFileParser
     private const string RemoteableArrayClass = "RemoteableArray";
 
     private static readonly byte[] ChunkMagic = [0xAB, 0x1E, 0x56, 0x78];
+    private static readonly byte[] HeadTrailerStart = [0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0];
     private static readonly byte[] SampleDataTag = [0x00, 0x0A, .. "SampleData"u8];
 
     internal static bool TryParse(
@@ -162,7 +162,22 @@ internal static class AnalysisFileParser
         if (!TryReadInt32(asd, ref p, out var count) || count < 0)
             return false;
 
-        var flag = HeadTableOffset + (long)count * sizeof(int) + HeadTrailerLength;
+        var trailer = HeadTableOffset + (long)count * sizeof(int);
+
+        // After the table come 0, 0, 100, then a byte count (4 in a stereo file, 2 in a mono one)
+        // and that many bytes.
+        if (
+            trailer + HeadTrailerStart.Length > asd.Length
+            || !asd.Slice((int)trailer, HeadTrailerStart.Length).SequenceEqual(HeadTrailerStart)
+        )
+            return false;
+
+        p = (int)trailer + HeadTrailerStart.Length;
+
+        if (!TryReadInt32(asd, ref p, out var length) || length < 0)
+            return false;
+
+        var flag = (long)p + length;
 
         if (
             flag + 1 + ChunkPreambleLength != sampleData
