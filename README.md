@@ -7,7 +7,11 @@ keeps about the files in your library:
   default clip, transients and waveform overview, which it can also write;
 - **the tags** in each folder's `Ableton Folder Info` XMP store, which it can also write;
 - **the tags** in Live's own file index, the database behind the browser, and every tag Live
-  knows.
+  knows;
+- **the samples your Live sets use**: which sets use a file, and pointing them at it when it moves.
+
+AbleKit is about the files in your library. It does not model what is inside a set, such as tracks,
+clips or devices; for that, see [AbleSharp](https://github.com/theokyr/AbleSharp).
 
 > [!CAUTION]
 > **Unofficial.** Not made, endorsed or supported by Ableton. The formats are undocumented and were
@@ -25,7 +29,7 @@ dotnet add package AbleKit --prerelease
 ```
 
 .NET 10. Versions below 1.0 may change the API between releases. Analysis files are in the
-`AbleKit.Analysis` namespace, tags in `AbleKit.Tags`.
+`AbleKit.Analysis` namespace, tags in `AbleKit.Tags`, sets in `AbleKit.Sets`.
 
 ## Read a warp
 
@@ -168,12 +172,43 @@ What the writer does:
 It keeps no backup and has no dry run. For bulk tagging from a command line, with a dry run by
 default and optional backups, see [LiveTagger](https://github.com/17cupsofcoffee/LiveTagger).
 
+## Follow a sample into your sets
+
+Renaming or moving a sample leaves every set that uses it showing the file as missing. `LiveSets`
+finds those sets and points them at the new path:
+
+```csharp
+using AbleKit.Sets;
+
+var sets = new LiveSets(@"C:\Music\Ableton\Projects");
+
+// Which sets use this file, by full path. Live's own backups are left out.
+var users = sets.Using([@"C:\Samples\Break.wav"]);
+
+// After moving the file: rewrite each set that used it, keeping a backup first.
+var result = sets.Relink(
+    [new SampleMove(@"C:\Samples\Break.wav", @"C:\Samples\Drums\Break.wav")],
+    backupLabel: "MyTool"
+);
+```
+
+What the relink does:
+
+- **It changes only the sample's paths**: the file name in the relative path and the whole full path,
+  in every reference to it. Nothing else in the set changes.
+- **It copies each set to its project's `Backup` folder first**, as
+  `Song [MyTool 2026-10-01 093000].als`, beside Live's own backups.
+- **It writes the new set beside the old one and swaps it in**, so a failure leaves the set as it was.
+  A set it could not rewrite is listed in `result.Failed`, to relink by hand.
+- **Close the set in Live first.** Live does not lock a set it has open, and writes its own copy back
+  on the next save, undoing the relink.
+
 ## Compared with other projects
 
 | | AbleKit | [AbleSharp](https://github.com/theokyr/AbleSharp) | [LiveTagger](https://github.com/17cupsofcoffee/LiveTagger) | [AbletonParsing](https://github.com/DBraun/AbletonParsing) | [ableton-asd-parser](https://github.com/Verbalize-public/ableton-asd-parser) |
 |---|---|---|---|---|---|
 | Language | C# library | C# library | Rust command line | Python | Python |
-| Live sets (`.als`) | | reads, writes | | | |
+| Live sets (`.als`) | finds and relinks samples | reads, writes | | | |
 | Live 12 `.asd` | reads, writes | | | Live 9 and 10 | reads |
 | Warp mode, default clip, saved flag | yes | | | | |
 | XMP tags | reads, writes | | reads, writes | | |

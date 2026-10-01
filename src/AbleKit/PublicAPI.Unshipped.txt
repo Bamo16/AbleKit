@@ -90,6 +90,37 @@ AbleKit.Analysis.WarpMode.RePitch = 3 -> AbleKit.Analysis.WarpMode
 AbleKit.Analysis.WarpMode.Rex = 5 -> AbleKit.Analysis.WarpMode
 AbleKit.Analysis.WarpMode.Texture = 2 -> AbleKit.Analysis.WarpMode
 AbleKit.Analysis.WarpMode.Tones = 1 -> AbleKit.Analysis.WarpMode
+AbleKit.Sets.LiveSets
+AbleKit.Sets.LiveSets.LiveSets(string! projectsRoot, System.TimeProvider? time = null) -> void
+AbleKit.Sets.LiveSets.Relink(System.Collections.Generic.IReadOnlyList<AbleKit.Sets.SampleMove!>! moves, string! backupLabel) -> AbleKit.Sets.SetRelinkResult!
+AbleKit.Sets.LiveSets.Using(System.Collections.Generic.IReadOnlyCollection<string!>! samples) -> System.Collections.Generic.IReadOnlyList<string!>!
+AbleKit.Sets.SampleMove
+AbleKit.Sets.SampleMove.<Clone>$() -> AbleKit.Sets.SampleMove!
+AbleKit.Sets.SampleMove.Deconstruct(out string! From, out string! To) -> void
+AbleKit.Sets.SampleMove.Equals(AbleKit.Sets.SampleMove? other) -> bool
+AbleKit.Sets.SampleMove.From.get -> string!
+AbleKit.Sets.SampleMove.From.init -> void
+AbleKit.Sets.SampleMove.SampleMove(string! From, string! To) -> void
+AbleKit.Sets.SampleMove.To.get -> string!
+AbleKit.Sets.SampleMove.To.init -> void
+AbleKit.Sets.SetRelinkFailure
+AbleKit.Sets.SetRelinkFailure.<Clone>$() -> AbleKit.Sets.SetRelinkFailure!
+AbleKit.Sets.SetRelinkFailure.Deconstruct(out string! Set, out string! Error) -> void
+AbleKit.Sets.SetRelinkFailure.Equals(AbleKit.Sets.SetRelinkFailure? other) -> bool
+AbleKit.Sets.SetRelinkFailure.Error.get -> string!
+AbleKit.Sets.SetRelinkFailure.Error.init -> void
+AbleKit.Sets.SetRelinkFailure.Set.get -> string!
+AbleKit.Sets.SetRelinkFailure.Set.init -> void
+AbleKit.Sets.SetRelinkFailure.SetRelinkFailure(string! Set, string! Error) -> void
+AbleKit.Sets.SetRelinkResult
+AbleKit.Sets.SetRelinkResult.<Clone>$() -> AbleKit.Sets.SetRelinkResult!
+AbleKit.Sets.SetRelinkResult.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Relinked, out System.Collections.Generic.IReadOnlyList<AbleKit.Sets.SetRelinkFailure!>! Failed) -> void
+AbleKit.Sets.SetRelinkResult.Equals(AbleKit.Sets.SetRelinkResult? other) -> bool
+AbleKit.Sets.SetRelinkResult.Failed.get -> System.Collections.Generic.IReadOnlyList<AbleKit.Sets.SetRelinkFailure!>!
+AbleKit.Sets.SetRelinkResult.Failed.init -> void
+AbleKit.Sets.SetRelinkResult.Relinked.get -> System.Collections.Generic.IReadOnlyList<string!>!
+AbleKit.Sets.SetRelinkResult.Relinked.init -> void
+AbleKit.Sets.SetRelinkResult.SetRelinkResult(System.Collections.Generic.IReadOnlyList<string!>! Relinked, System.Collections.Generic.IReadOnlyList<AbleKit.Sets.SetRelinkFailure!>! Failed) -> void
 AbleKit.Tags.FileIndexReader
 AbleKit.Tags.FileIndexReader.FileIndexReader(string! indexFolder) -> void
 AbleKit.Tags.FileIndexReader.Read(string! folder) -> AbleKit.Tags.FolderInfo!
@@ -181,6 +212,15 @@ override AbleKit.Analysis.SampleOverview.GetHashCode() -> int
 override AbleKit.Analysis.SampleOverview.ToString() -> string!
 override AbleKit.Analysis.Transient.GetHashCode() -> int
 override AbleKit.Analysis.WarpMarker.GetHashCode() -> int
+override AbleKit.Sets.SampleMove.Equals(object? obj) -> bool
+override AbleKit.Sets.SampleMove.GetHashCode() -> int
+override AbleKit.Sets.SampleMove.ToString() -> string!
+override AbleKit.Sets.SetRelinkFailure.Equals(object? obj) -> bool
+override AbleKit.Sets.SetRelinkFailure.GetHashCode() -> int
+override AbleKit.Sets.SetRelinkFailure.ToString() -> string!
+override AbleKit.Sets.SetRelinkResult.Equals(object? obj) -> bool
+override AbleKit.Sets.SetRelinkResult.GetHashCode() -> int
+override AbleKit.Sets.SetRelinkResult.ToString() -> string!
 override AbleKit.Tags.FileTags.Equals(object? obj) -> bool
 override AbleKit.Tags.FileTags.GetHashCode() -> int
 override AbleKit.Tags.FileTags.ToString() -> string!
@@ -231,6 +271,12 @@ static AbleKit.Analysis.Transient.operator !=(AbleKit.Analysis.Transient left, A
 static AbleKit.Analysis.Transient.operator ==(AbleKit.Analysis.Transient left, AbleKit.Analysis.Transient right) -> bool
 static AbleKit.Analysis.WarpMarker.operator !=(AbleKit.Analysis.WarpMarker left, AbleKit.Analysis.WarpMarker right) -> bool
 static AbleKit.Analysis.WarpMarker.operator ==(AbleKit.Analysis.WarpMarker left, AbleKit.Analysis.WarpMarker right) -> bool
+static AbleKit.Sets.SampleMove.operator !=(AbleKit.Sets.SampleMove? left, AbleKit.Sets.SampleMove? right) -> bool
+static AbleKit.Sets.SampleMove.operator ==(AbleKit.Sets.SampleMove? left, AbleKit.Sets.SampleMove? right) -> bool
+static AbleKit.Sets.SetRelinkFailure.operator !=(AbleKit.Sets.SetRelinkFailure? left, AbleKit.Sets.SetRelinkFailure? right) -> bool
+static AbleKit.Sets.SetRelinkFailure.operator ==(AbleKit.Sets.SetRelinkFailure? left, AbleKit.Sets.SetRelinkFailure? right) -> bool
+static AbleKit.Sets.SetRelinkResult.operator !=(AbleKit.Sets.SetRelinkResult? left, AbleKit.Sets.SetRelinkResult? right) -> bool
+static AbleKit.Sets.SetRelinkResult.operator ==(AbleKit.Sets.SetRelinkResult? left, AbleKit.Sets.SetRelinkResult? right) -> bool
 static AbleKit.Tags.FileIndexReader.DefaultFolder.get -> string!
 static AbleKit.Tags.FileTags.operator !=(AbleKit.Tags.FileTags? left, AbleKit.Tags.FileTags? right) -> bool
 static AbleKit.Tags.FileTags.operator ==(AbleKit.Tags.FileTags? left, AbleKit.Tags.FileTags? right) -> bool

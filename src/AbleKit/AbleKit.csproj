@@ -5,8 +5,8 @@
         <Authors>Bamo16</Authors>
         <!-- AbleKit does not say Ableton, so the title, the description's opening and the tags carry it for NuGet search. -->
         <Title>AbleKit: Ableton Live file formats for .NET</Title>
-        <Description>Read and write Ableton Live 12's files from .NET: the warp markers, default clip, transients and waveform in a .asd analysis file, so a stem can arrive in Live already warped, and the tags in Live's XMP stores and file index. Unofficial; not affiliated with Ableton.</Description>
-        <PackageTags>ableton;ableton-live;live;live12;asd;warp;warp-markers;transients;samples;sample-library;xmp;tags;audio;music-production;daw</PackageTags>
+        <Description>Read and write Ableton Live 12's files from .NET: the warp markers, default clip, transients and waveform in a .asd analysis file, so a stem can arrive in Live already warped, the tags in Live's XMP stores and file index, and the samples your Live sets use, relinked when they move. Unofficial; not affiliated with Ableton.</Description>
+        <PackageTags>ableton;ableton-live;live;live12;asd;warp;warp-markers;transients;samples;sample-library;xmp;tags;als;live-set;audio;music-production;daw</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageProjectUrl>https://github.com/Bamo16/AbleKit</PackageProjectUrl>
