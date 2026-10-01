@@ -4,7 +4,7 @@ namespace AbletonSampleData.Tests;
 /// One stem's sidecar before and after <em>Save Default Clip</em>, cut short after the warp
 /// section, and a Live 12 sidecar with Loop on from DBraun/AbletonParsing.
 /// </summary>
-public class AnalysisFileParserTests
+public sealed class AnalysisFileParserTests
 {
     [Fact]
     public void An_analysed_sidecar_has_no_default_clip_and_no_markers()

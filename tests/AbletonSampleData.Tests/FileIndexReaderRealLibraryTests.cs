@@ -1,7 +1,7 @@
 namespace AbletonSampleData.Tests;
 
 /// <summary>Ableton's own index, asserted against the real database on this machine.</summary>
-public class FileIndexReaderRealLibraryTests
+public sealed class FileIndexReaderRealLibraryTests
 {
     public static TheoryData<string> Roots => [RealLibrary.StagingRoot, RealLibrary.MashupRoot];
 
@@ -24,7 +24,7 @@ public class FileIndexReaderRealLibraryTests
     {
         SkipUnlessPresent(root);
 
-        var entry = Read(root).Entries.First();
+        var entry = Read(root).Entries[0];
 
         Assert.True(Read(root).TryGet(entry.RelativePath, out var byRelative));
         Assert.True(Read(root).TryGet(Path.Combine(root, entry.RelativePath), out var byAbsolute));

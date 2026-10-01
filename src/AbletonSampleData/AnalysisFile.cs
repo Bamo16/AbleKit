@@ -28,6 +28,7 @@ public sealed record AnalysisFile(
         }
     }
 
+    /// <summary>Reads an analysis file already in memory; false when it is unrecognised.</summary>
     public static bool TryParse(
         ReadOnlySpan<byte> asd,
         [NotNullWhen(true)] out AnalysisFile? analysis
@@ -60,8 +61,10 @@ public sealed record AnalysisFile(
             return null;
 
         for (var i = Markers.Count - 2; i > 0; i--)
+        {
             if (seconds >= Markers[i].Seconds)
                 return Tempo(Markers[i], Markers[i + 1]);
+        }
 
         return Tempo(Markers[0], Markers[1]);
     }
@@ -105,13 +108,27 @@ public sealed record SampleOverview(int SamplesPerBin, IReadOnlyList<float> Peak
 /// <param name="Beat">Position on Ableton's grid.</param>
 public readonly record struct WarpMarker(double Seconds, double Beat);
 
+/// <summary>The algorithm Live stretches the sample with, as chosen in its clip view.</summary>
 public enum WarpMode
 {
+    /// <summary>Slices at transients; for drums and other rhythmic material.</summary>
     Beats,
+
+    /// <summary>For monophonic, clearly pitched material such as vocals or bass.</summary>
     Tones,
+
+    /// <summary>For polyphonic textures without a clear pitch.</summary>
     Texture,
+
+    /// <summary>No stretching: the pitch follows the speed, like a record.</summary>
     RePitch,
+
+    /// <summary>For full mixes.</summary>
     Complex,
+
+    /// <summary>For REX files, which carry their own slices.</summary>
     Rex,
+
+    /// <summary>Complex with formant control; for full mixes and vocals.</summary>
     ComplexPro,
 }

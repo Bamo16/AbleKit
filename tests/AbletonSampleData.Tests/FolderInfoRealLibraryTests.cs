@@ -1,7 +1,7 @@
 namespace AbletonSampleData.Tests;
 
 /// <summary>The XMP contract, asserted against both real roots.</summary>
-public class FolderInfoRealLibraryTests
+public sealed class FolderInfoRealLibraryTests
 {
     private const string StagingRoot = @"P:\RYAN\Ableton\Sample Staging";
     private const string MashupRoot = @"P:\RYAN\Ableton\Mashup Samples";

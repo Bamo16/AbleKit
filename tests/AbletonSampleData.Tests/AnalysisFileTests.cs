@@ -1,6 +1,6 @@
 namespace AbletonSampleData.Tests;
 
-public class AnalysisFileTests
+public sealed class AnalysisFileTests
 {
     [Theory]
     [InlineData(0)]
@@ -8,8 +8,7 @@ public class AnalysisFileTests
     public void A_tempo_needs_two_markers_to_exist(int markers)
     {
         Assert.Null(
-            Warp(Enumerable.Range(0, markers).Select(i => new WarpMarker(i, i)).ToArray())
-                .TempoAt(0)
+            Warp([.. Enumerable.Range(0, markers).Select(i => new WarpMarker(i, i))]).TempoAt(0)
         );
     }
 

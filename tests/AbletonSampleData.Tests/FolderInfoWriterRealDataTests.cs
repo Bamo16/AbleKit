@@ -3,7 +3,7 @@ using System.Xml.Linq;
 namespace AbletonSampleData.Tests;
 
 /// <summary>The writer against the tag store Ableton actually wrote, only ever on a copy.</summary>
-public class FolderInfoWriterRealDataTests : IDisposable
+public sealed class FolderInfoWriterRealDataTests : IDisposable
 {
     private readonly string _root = Path.Combine(
         Path.GetTempPath(),
@@ -56,9 +56,9 @@ public class FolderInfoWriterRealDataTests : IDisposable
         var before = reader.Read(_root).Entries;
 
         FolderInfoWriter.Replace(
-            path!,
-            XDocument.Parse(File.ReadAllText(path!)),
-            File.GetLastWriteTimeUtc(path!)
+            path,
+            XDocument.Parse(File.ReadAllText(path)),
+            File.GetLastWriteTimeUtc(path)
         );
 
         var after = reader.Read(_root).Entries;
@@ -68,7 +68,7 @@ public class FolderInfoWriterRealDataTests : IDisposable
             after.Select(e => (e.RelativePath, string.Join(",", e.Keywords)))
         );
 
-        var bytes = File.ReadAllBytes(path!);
+        var bytes = File.ReadAllBytes(path);
 
         Assert.False(bytes[0] is 0xEF && bytes[1] is 0xBB && bytes[2] is 0xBF, "wrote a BOM");
         Assert.StartsWith("<x:xmpmeta", System.Text.Encoding.UTF8.GetString(bytes));

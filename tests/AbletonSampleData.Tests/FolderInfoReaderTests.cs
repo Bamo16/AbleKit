@@ -1,6 +1,6 @@
 namespace AbletonSampleData.Tests;
 
-public class FolderInfoReaderTests : IDisposable
+public sealed class FolderInfoReaderTests : IDisposable
 {
     private readonly string _root = Path.Combine(
         Path.GetTempPath(),
@@ -125,7 +125,7 @@ public class FolderInfoReaderTests : IDisposable
     [Fact]
     public void Reads_while_the_file_is_held_open_for_writing()
     {
-        var info = ReadXmp(Entry("Held.flac", "Key|F", "Key|Major"));
+        ReadXmp(Entry("Held.flac", "Key|F", "Key|Major"));
         var xmp = Directory.GetFiles(Path.Combine(_root, "Ableton Folder Info"), "*.xmp")[0];
 
         using var holder = new FileStream(

@@ -1,0 +1,161 @@
+#nullable enable
+AbletonSampleData.AnalysisFile
+AbletonSampleData.AnalysisFile.<Clone>$() -> AbletonSampleData.AnalysisFile!
+AbletonSampleData.AnalysisFile.AnalysisFile(bool IsWarped, AbletonSampleData.WarpMode Mode, int TimeSignatureNumerator, int TimeSignatureDenominator, System.Collections.Generic.IReadOnlyList<AbletonSampleData.WarpMarker>! Markers, AbletonSampleData.DefaultClip? DefaultClip = null, AbletonSampleData.SampleOverview? Overview = null) -> void
+AbletonSampleData.AnalysisFile.Deconstruct(out bool IsWarped, out AbletonSampleData.WarpMode Mode, out int TimeSignatureNumerator, out int TimeSignatureDenominator, out System.Collections.Generic.IReadOnlyList<AbletonSampleData.WarpMarker>! Markers, out AbletonSampleData.DefaultClip? DefaultClip, out AbletonSampleData.SampleOverview? Overview) -> void
+AbletonSampleData.AnalysisFile.DefaultClip.get -> AbletonSampleData.DefaultClip?
+AbletonSampleData.AnalysisFile.DefaultClip.init -> void
+AbletonSampleData.AnalysisFile.Equals(AbletonSampleData.AnalysisFile? other) -> bool
+AbletonSampleData.AnalysisFile.IsWarped.get -> bool
+AbletonSampleData.AnalysisFile.IsWarped.init -> void
+AbletonSampleData.AnalysisFile.Markers.get -> System.Collections.Generic.IReadOnlyList<AbletonSampleData.WarpMarker>!
+AbletonSampleData.AnalysisFile.Markers.init -> void
+AbletonSampleData.AnalysisFile.Mode.get -> AbletonSampleData.WarpMode
+AbletonSampleData.AnalysisFile.Mode.init -> void
+AbletonSampleData.AnalysisFile.Overview.get -> AbletonSampleData.SampleOverview?
+AbletonSampleData.AnalysisFile.Overview.init -> void
+AbletonSampleData.AnalysisFile.SecondsAt(double beat) -> double?
+AbletonSampleData.AnalysisFile.TempoAt(double seconds) -> double?
+AbletonSampleData.AnalysisFile.TimeSignatureDenominator.get -> int
+AbletonSampleData.AnalysisFile.TimeSignatureDenominator.init -> void
+AbletonSampleData.AnalysisFile.TimeSignatureNumerator.get -> int
+AbletonSampleData.AnalysisFile.TimeSignatureNumerator.init -> void
+AbletonSampleData.DefaultClip
+AbletonSampleData.DefaultClip.<Clone>$() -> AbletonSampleData.DefaultClip!
+AbletonSampleData.DefaultClip.Deconstruct(out double Start, out double End) -> void
+AbletonSampleData.DefaultClip.DefaultClip(double Start, double End) -> void
+AbletonSampleData.DefaultClip.End.get -> double
+AbletonSampleData.DefaultClip.End.init -> void
+AbletonSampleData.DefaultClip.Equals(AbletonSampleData.DefaultClip? other) -> bool
+AbletonSampleData.DefaultClip.Start.get -> double
+AbletonSampleData.DefaultClip.Start.init -> void
+AbletonSampleData.FileIndexReader
+AbletonSampleData.FileIndexReader.FileIndexReader(string! indexFolder) -> void
+AbletonSampleData.FileIndexReader.Read(string! folder) -> AbletonSampleData.FolderInfo!
+AbletonSampleData.FileTags
+AbletonSampleData.FileTags.<Clone>$() -> AbletonSampleData.FileTags!
+AbletonSampleData.FileTags.Equals(AbletonSampleData.FileTags? other) -> bool
+AbletonSampleData.FileTags.FileTags() -> void
+AbletonSampleData.FileTags.HiddenKeywords.get -> System.Collections.Generic.IReadOnlyList<string!>!
+AbletonSampleData.FileTags.HiddenKeywords.init -> void
+AbletonSampleData.FileTags.Keywords.get -> System.Collections.Generic.IReadOnlyList<string!>!
+AbletonSampleData.FileTags.Keywords.init -> void
+AbletonSampleData.FileTags.RelativePath.get -> string!
+AbletonSampleData.FileTags.RelativePath.init -> void
+AbletonSampleData.FolderInfo
+AbletonSampleData.FolderInfo.Entries.get -> System.Collections.Generic.IReadOnlyList<AbletonSampleData.FileTags!>!
+AbletonSampleData.FolderInfo.Folder.get -> string!
+AbletonSampleData.FolderInfo.FolderInfo(string! folder, System.Collections.Generic.IReadOnlyList<AbletonSampleData.FileTags!>! entries) -> void
+AbletonSampleData.FolderInfo.TryGet(string! path, out AbletonSampleData.FileTags? tags) -> bool
+AbletonSampleData.FolderInfoReader
+AbletonSampleData.FolderInfoReader.FolderInfoReader() -> void
+AbletonSampleData.FolderInfoReader.Read(string! folder) -> AbletonSampleData.FolderInfo!
+AbletonSampleData.FolderInfoWriter
+AbletonSampleData.FolderInfoWriter.Apply(string! folder, System.Collections.Generic.IReadOnlyList<AbletonSampleData.TagAssignment!>! assignments) -> AbletonSampleData.TagWriteOutcome!
+AbletonSampleData.FolderInfoWriter.FolderInfoWriter() -> void
+AbletonSampleData.FolderInfoWriter.Rename(string! folder, System.Collections.Generic.IReadOnlyList<AbletonSampleData.TagRename!>! renames) -> AbletonSampleData.TagWriteOutcome!
+AbletonSampleData.SampleOverview
+AbletonSampleData.SampleOverview.<Clone>$() -> AbletonSampleData.SampleOverview!
+AbletonSampleData.SampleOverview.Deconstruct(out int SamplesPerBin, out System.Collections.Generic.IReadOnlyList<float>! Peaks) -> void
+AbletonSampleData.SampleOverview.Equals(AbletonSampleData.SampleOverview? other) -> bool
+AbletonSampleData.SampleOverview.PeakBetween(long fromSample, long toSample) -> float
+AbletonSampleData.SampleOverview.Peaks.get -> System.Collections.Generic.IReadOnlyList<float>!
+AbletonSampleData.SampleOverview.Peaks.init -> void
+AbletonSampleData.SampleOverview.SampleOverview(int SamplesPerBin, System.Collections.Generic.IReadOnlyList<float>! Peaks) -> void
+AbletonSampleData.SampleOverview.SamplesPerBin.get -> int
+AbletonSampleData.SampleOverview.SamplesPerBin.init -> void
+AbletonSampleData.TagAssignment
+AbletonSampleData.TagAssignment.<Clone>$() -> AbletonSampleData.TagAssignment!
+AbletonSampleData.TagAssignment.Equals(AbletonSampleData.TagAssignment? other) -> bool
+AbletonSampleData.TagAssignment.Keywords.get -> System.Collections.Generic.IReadOnlyList<string!>!
+AbletonSampleData.TagAssignment.Keywords.init -> void
+AbletonSampleData.TagAssignment.RelativePath.get -> string!
+AbletonSampleData.TagAssignment.RelativePath.init -> void
+AbletonSampleData.TagAssignment.TagAssignment() -> void
+AbletonSampleData.TagRename
+AbletonSampleData.TagRename.<Clone>$() -> AbletonSampleData.TagRename!
+AbletonSampleData.TagRename.Equals(AbletonSampleData.TagRename? other) -> bool
+AbletonSampleData.TagRename.From.get -> string!
+AbletonSampleData.TagRename.From.init -> void
+AbletonSampleData.TagRename.TagRename() -> void
+AbletonSampleData.TagRename.To.get -> string!
+AbletonSampleData.TagRename.To.init -> void
+AbletonSampleData.TagWriteOutcome
+AbletonSampleData.TagWriteOutcome.<Clone>$() -> AbletonSampleData.TagWriteOutcome!
+AbletonSampleData.TagWriteOutcome.Applied.get -> int
+AbletonSampleData.TagWriteOutcome.Applied.init -> void
+AbletonSampleData.TagWriteOutcome.Equals(AbletonSampleData.TagWriteOutcome? other) -> bool
+AbletonSampleData.TagWriteOutcome.Error.get -> string?
+AbletonSampleData.TagWriteOutcome.Error.init -> void
+AbletonSampleData.TagWriteOutcome.IsStale.get -> bool
+AbletonSampleData.TagWriteOutcome.IsStale.init -> void
+AbletonSampleData.TagWriteOutcome.IsSuccess.get -> bool
+AbletonSampleData.TagWriteOutcome.IsSuccess.init -> void
+AbletonSampleData.TagWriteOutcome.TagWriteOutcome() -> void
+AbletonSampleData.WarpMarker
+AbletonSampleData.WarpMarker.Beat.get -> double
+AbletonSampleData.WarpMarker.Beat.init -> void
+AbletonSampleData.WarpMarker.Deconstruct(out double Seconds, out double Beat) -> void
+AbletonSampleData.WarpMarker.Equals(AbletonSampleData.WarpMarker other) -> bool
+AbletonSampleData.WarpMarker.Seconds.get -> double
+AbletonSampleData.WarpMarker.Seconds.init -> void
+AbletonSampleData.WarpMarker.WarpMarker() -> void
+AbletonSampleData.WarpMarker.WarpMarker(double Seconds, double Beat) -> void
+AbletonSampleData.WarpMode
+AbletonSampleData.WarpMode.Beats = 0 -> AbletonSampleData.WarpMode
+AbletonSampleData.WarpMode.Complex = 4 -> AbletonSampleData.WarpMode
+AbletonSampleData.WarpMode.ComplexPro = 6 -> AbletonSampleData.WarpMode
+AbletonSampleData.WarpMode.RePitch = 3 -> AbletonSampleData.WarpMode
+AbletonSampleData.WarpMode.Rex = 5 -> AbletonSampleData.WarpMode
+AbletonSampleData.WarpMode.Texture = 2 -> AbletonSampleData.WarpMode
+AbletonSampleData.WarpMode.Tones = 1 -> AbletonSampleData.WarpMode
+override AbletonSampleData.AnalysisFile.Equals(object? obj) -> bool
+override AbletonSampleData.AnalysisFile.GetHashCode() -> int
+override AbletonSampleData.AnalysisFile.ToString() -> string!
+override AbletonSampleData.DefaultClip.Equals(object? obj) -> bool
+override AbletonSampleData.DefaultClip.GetHashCode() -> int
+override AbletonSampleData.DefaultClip.ToString() -> string!
+override AbletonSampleData.FileTags.Equals(object? obj) -> bool
+override AbletonSampleData.FileTags.GetHashCode() -> int
+override AbletonSampleData.FileTags.ToString() -> string!
+override AbletonSampleData.SampleOverview.Equals(object? obj) -> bool
+override AbletonSampleData.SampleOverview.GetHashCode() -> int
+override AbletonSampleData.SampleOverview.ToString() -> string!
+override AbletonSampleData.TagAssignment.Equals(object? obj) -> bool
+override AbletonSampleData.TagAssignment.GetHashCode() -> int
+override AbletonSampleData.TagAssignment.ToString() -> string!
+override AbletonSampleData.TagRename.Equals(object? obj) -> bool
+override AbletonSampleData.TagRename.GetHashCode() -> int
+override AbletonSampleData.TagRename.ToString() -> string!
+override AbletonSampleData.TagWriteOutcome.Equals(object? obj) -> bool
+override AbletonSampleData.TagWriteOutcome.GetHashCode() -> int
+override AbletonSampleData.TagWriteOutcome.ToString() -> string!
+override AbletonSampleData.WarpMarker.GetHashCode() -> int
+static AbletonSampleData.AnalysisFile.operator !=(AbletonSampleData.AnalysisFile? left, AbletonSampleData.AnalysisFile? right) -> bool
+static AbletonSampleData.AnalysisFile.operator ==(AbletonSampleData.AnalysisFile? left, AbletonSampleData.AnalysisFile? right) -> bool
+static AbletonSampleData.AnalysisFile.TryParse(System.ReadOnlySpan<byte> asd, out AbletonSampleData.AnalysisFile? analysis) -> bool
+static AbletonSampleData.AnalysisFile.TryRead(string! path, out AbletonSampleData.AnalysisFile? analysis) -> bool
+static AbletonSampleData.DefaultClip.operator !=(AbletonSampleData.DefaultClip? left, AbletonSampleData.DefaultClip? right) -> bool
+static AbletonSampleData.DefaultClip.operator ==(AbletonSampleData.DefaultClip? left, AbletonSampleData.DefaultClip? right) -> bool
+static AbletonSampleData.FileIndexReader.DefaultFolder.get -> string!
+static AbletonSampleData.FileTags.operator !=(AbletonSampleData.FileTags? left, AbletonSampleData.FileTags? right) -> bool
+static AbletonSampleData.FileTags.operator ==(AbletonSampleData.FileTags? left, AbletonSampleData.FileTags? right) -> bool
+static AbletonSampleData.FolderInfo.Empty(string! folder) -> AbletonSampleData.FolderInfo!
+static AbletonSampleData.FolderInfoWriter.IsWellFormed(string! keyword) -> bool
+static AbletonSampleData.SampleOverview.operator !=(AbletonSampleData.SampleOverview? left, AbletonSampleData.SampleOverview? right) -> bool
+static AbletonSampleData.SampleOverview.operator ==(AbletonSampleData.SampleOverview? left, AbletonSampleData.SampleOverview? right) -> bool
+static AbletonSampleData.TagAssignment.operator !=(AbletonSampleData.TagAssignment? left, AbletonSampleData.TagAssignment? right) -> bool
+static AbletonSampleData.TagAssignment.operator ==(AbletonSampleData.TagAssignment? left, AbletonSampleData.TagAssignment? right) -> bool
+static AbletonSampleData.TagRename.operator !=(AbletonSampleData.TagRename? left, AbletonSampleData.TagRename? right) -> bool
+static AbletonSampleData.TagRename.operator ==(AbletonSampleData.TagRename? left, AbletonSampleData.TagRename? right) -> bool
+static AbletonSampleData.TagWriteOutcome.operator !=(AbletonSampleData.TagWriteOutcome? left, AbletonSampleData.TagWriteOutcome? right) -> bool
+static AbletonSampleData.TagWriteOutcome.operator ==(AbletonSampleData.TagWriteOutcome? left, AbletonSampleData.TagWriteOutcome? right) -> bool
+static AbletonSampleData.TagWriteOutcome.Rejected(string! error) -> AbletonSampleData.TagWriteOutcome!
+static AbletonSampleData.TagWriteOutcome.Stale(string! error) -> AbletonSampleData.TagWriteOutcome!
+static AbletonSampleData.TagWriteOutcome.Written(int applied) -> AbletonSampleData.TagWriteOutcome!
+static AbletonSampleData.WarpMarker.operator !=(AbletonSampleData.WarpMarker left, AbletonSampleData.WarpMarker right) -> bool
+static AbletonSampleData.WarpMarker.operator ==(AbletonSampleData.WarpMarker left, AbletonSampleData.WarpMarker right) -> bool
+static readonly AbletonSampleData.FolderInfoWriter.Modes -> System.Collections.Generic.IReadOnlySet<string!>!
+static readonly AbletonSampleData.FolderInfoWriter.Tonics -> System.Collections.Generic.IReadOnlySet<string!>!
+~override AbletonSampleData.WarpMarker.Equals(object obj) -> bool
+~override AbletonSampleData.WarpMarker.ToString() -> string

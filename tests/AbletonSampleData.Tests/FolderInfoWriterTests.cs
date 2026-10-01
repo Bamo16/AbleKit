@@ -3,7 +3,7 @@ using System.Xml.Linq;
 
 namespace AbletonSampleData.Tests;
 
-public class FolderInfoWriterTests : IDisposable
+public sealed class FolderInfoWriterTests : IDisposable
 {
     private readonly string _root = Path.Combine(
         Path.GetTempPath(),
@@ -35,7 +35,7 @@ public class FolderInfoWriterTests : IDisposable
     {
         var outcome = _writer.Apply(_root, [Assign("a.flac", "Key|A", "Key|Minor")]);
 
-        Assert.True(outcome.IsSuccess);
+        Assert.IsType<TagWriteOutcome.Written>(outcome);
         Assert.Equal("dc66a3fa-0fe1-5352-91cf-3ec237e9ee90.xmp", Path.GetFileName(XmpPath));
         Assert.True(_reader.Read(_root).TryGet("a.flac", out var tags));
         Assert.Equal(["Key|A", "Key|Minor"], tags.Keywords);
@@ -85,9 +85,9 @@ public class FolderInfoWriterTests : IDisposable
         // Live would register a second, permanent "F#".
         var outcome = _writer.Apply(_root, [Assign("a.flac", "Key|F#", "Key|Major")]);
 
-        Assert.False(outcome.IsSuccess);
-        Assert.False(outcome.IsStale, "a bad keyword is not fixed by retrying");
-        Assert.Contains("Key|F#", outcome.Error);
+        // Rejected, not Stale: a bad keyword is not fixed by retrying.
+        var rejected = Assert.IsType<TagWriteOutcome.Rejected>(outcome);
+        Assert.Contains("Key|F#", rejected.Error);
         Assert.False(Directory.Exists(Path.Combine(_root, "Ableton Folder Info")));
     }
 
@@ -99,7 +99,7 @@ public class FolderInfoWriterTests : IDisposable
             [Assign("good.flac", "Key|A", "Key|Minor"), Assign("bad.flac", "Key|H", "Key|Major")]
         );
 
-        Assert.False(outcome.IsSuccess);
+        Assert.IsType<TagWriteOutcome.Rejected>(outcome);
         Assert.False(Directory.Exists(Path.Combine(_root, "Ableton Folder Info")));
     }
 

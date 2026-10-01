@@ -1,7 +1,7 @@
 namespace AbletonSampleData.Tests;
 
 /// <summary>The reader against every <c>.asd</c> the real library holds.</summary>
-public class AnalysisFileRealLibraryTests
+public sealed class AnalysisFileRealLibraryTests
 {
     private static readonly Lazy<IReadOnlyList<Sidecar>> Library = new(() =>
         [

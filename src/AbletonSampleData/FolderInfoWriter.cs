@@ -63,12 +63,12 @@ public sealed class FolderInfoWriter
     public TagWriteOutcome Apply(string folder, IReadOnlyList<TagAssignment> assignments)
     {
         if (assignments.Count is 0)
-            return TagWriteOutcome.Written(0);
+            return new TagWriteOutcome.Written(0);
 
         if (
             assignments.SelectMany(a => a.Keywords).FirstOrDefault(k => !IsWellFormed(k)) is { } bad
         )
-            return TagWriteOutcome.Rejected($"'{bad}' is not a Category|Value keyword");
+            return new TagWriteOutcome.Rejected($"'{bad}' is not a Category|Value keyword");
 
         var directory = Path.Combine(folder, FolderInfoFile.Directory);
         var path = ExistingXmp(folder);
@@ -81,7 +81,9 @@ public sealed class FolderInfoWriter
             var document = path is not null ? Load(path) : NewDocument();
 
             if (document is null)
-                return TagWriteOutcome.Stale("the tag store was mid-write and could not be read");
+                return new TagWriteOutcome.Stale(
+                    "the tag store was mid-write and could not be read"
+                );
 
             var items = Items(document);
 
@@ -95,12 +97,12 @@ public sealed class FolderInfoWriter
                 document,
                 stamp
             )
-                ? TagWriteOutcome.Written(assignments.Count)
-                : TagWriteOutcome.Stale("the tag store changed while it was being updated");
+                ? new TagWriteOutcome.Written(assignments.Count)
+                : new TagWriteOutcome.Stale("the tag store changed while it was being updated");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return TagWriteOutcome.Stale(ex.Message);
+            return new TagWriteOutcome.Stale(ex.Message);
         }
     }
 
@@ -110,13 +112,13 @@ public sealed class FolderInfoWriter
     public TagWriteOutcome Rename(string folder, IReadOnlyList<TagRename> renames)
     {
         if (renames.Count is 0)
-            return TagWriteOutcome.Written(0);
+            return new TagWriteOutcome.Written(0);
 
         var path = ExistingXmp(folder);
 
         // No store yet is not a failure — nothing carries the old names to rename.
         if (path is null)
-            return TagWriteOutcome.Written(0);
+            return new TagWriteOutcome.Written(0);
 
         try
         {
@@ -124,7 +126,9 @@ public sealed class FolderInfoWriter
             var document = Load(path);
 
             if (document is null)
-                return TagWriteOutcome.Stale("the tag store was mid-write and could not be read");
+                return new TagWriteOutcome.Stale(
+                    "the tag store was mid-write and could not be read"
+                );
 
             var items = Items(document);
 
@@ -140,17 +144,17 @@ public sealed class FolderInfoWriter
             }
 
             if (moved is 0)
-                return TagWriteOutcome.Written(0);
+                return new TagWriteOutcome.Written(0);
 
             Stamp(document);
 
             return Replace(path, document, stamp)
-                ? TagWriteOutcome.Written(moved)
-                : TagWriteOutcome.Stale("the tag store changed while it was being updated");
+                ? new TagWriteOutcome.Written(moved)
+                : new TagWriteOutcome.Stale("the tag store changed while it was being updated");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return TagWriteOutcome.Stale(ex.Message);
+            return new TagWriteOutcome.Stale(ex.Message);
         }
     }
 
@@ -183,7 +187,7 @@ public sealed class FolderInfoWriter
 
             return XDocument.Load(stream);
         }
-        catch (Exception ex) when (ex is IOException or System.Xml.XmlException)
+        catch (Exception ex) when (ex is IOException or XmlException)
         {
             return null;
         }
@@ -309,45 +313,39 @@ public sealed class FolderInfoWriter
 /// <summary>Keywords to put on one file, named the way Ableton names it.</summary>
 public sealed record TagAssignment
 {
+    /// <summary>The file's path relative to the folder.</summary>
     public required string RelativePath { get; init; }
 
+    /// <summary>Every keyword the file should carry, as <c>Category|Value</c>, replacing what it has.</summary>
     public required IReadOnlyList<string> Keywords { get; init; }
 }
 
 /// <summary>One entry's move to a new name, both relative to the folder.</summary>
 public sealed record TagRename
 {
+    /// <summary>The name the entry has now.</summary>
     public required string From { get; init; }
+
+    /// <summary>The name it moves to.</summary>
     public required string To { get; init; }
 }
 
-/// <summary>How one write turned out.</summary>
-public sealed record TagWriteOutcome
+/// <summary>How one write turned out: <see cref="Written"/>, <see cref="Stale"/> or <see cref="Rejected"/>.</summary>
+public abstract record TagWriteOutcome
 {
-    public required bool IsSuccess { get; init; }
+    private TagWriteOutcome() { }
 
-    /// <summary>How many files were given keywords.</summary>
-    public int Applied { get; init; }
+    /// <summary>The store was written, or needed no change.</summary>
+    /// <param name="Applied">How many files were given keywords, or renamed.</param>
+    public sealed record Written(int Applied) : TagWriteOutcome;
 
     /// <summary>
-    /// True when nothing was wrong with the request — the store simply moved underneath it.
-    /// Unlike a rejection, this is fixed by trying again.
+    /// Nothing was wrong with the request; the store moved underneath it. Trying again fixes it.
     /// </summary>
-    public bool IsStale { get; init; }
+    /// <param name="Error">What moved.</param>
+    public sealed record Stale(string Error) : TagWriteOutcome;
 
-    public string? Error { get; init; }
-
-    public static TagWriteOutcome Written(int applied) =>
-        new() { IsSuccess = true, Applied = applied };
-
-    public static TagWriteOutcome Stale(string error) =>
-        new()
-        {
-            IsSuccess = false,
-            IsStale = true,
-            Error = error,
-        };
-
-    public static TagWriteOutcome Rejected(string error) =>
-        new() { IsSuccess = false, Error = error };
+    /// <summary>The request itself was wrong, so trying again will not fix it.</summary>
+    /// <param name="Error">What was wrong with it.</param>
+    public sealed record Rejected(string Error) : TagWriteOutcome;
 }

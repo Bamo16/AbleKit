@@ -1,0 +1,59 @@
+#nullable enable
+*REMOVED*AbletonSampleData.TagWriteOutcome.<Clone>$() -> AbletonSampleData.TagWriteOutcome!
+*REMOVED*AbletonSampleData.TagWriteOutcome.Applied.get -> int
+*REMOVED*AbletonSampleData.TagWriteOutcome.Applied.init -> void
+*REMOVED*AbletonSampleData.TagWriteOutcome.Equals(AbletonSampleData.TagWriteOutcome? other) -> bool
+*REMOVED*AbletonSampleData.TagWriteOutcome.Error.get -> string?
+*REMOVED*AbletonSampleData.TagWriteOutcome.Error.init -> void
+*REMOVED*AbletonSampleData.TagWriteOutcome.IsStale.get -> bool
+*REMOVED*AbletonSampleData.TagWriteOutcome.IsStale.init -> void
+*REMOVED*AbletonSampleData.TagWriteOutcome.IsSuccess.get -> bool
+*REMOVED*AbletonSampleData.TagWriteOutcome.IsSuccess.init -> void
+AbletonSampleData.TagWriteOutcome.Rejected
+AbletonSampleData.TagWriteOutcome.Rejected.Deconstruct(out string! Error) -> void
+AbletonSampleData.TagWriteOutcome.Rejected.Equals(AbletonSampleData.TagWriteOutcome.Rejected? other) -> bool
+AbletonSampleData.TagWriteOutcome.Rejected.Error.get -> string!
+AbletonSampleData.TagWriteOutcome.Rejected.Error.init -> void
+AbletonSampleData.TagWriteOutcome.Rejected.Rejected(string! Error) -> void
+AbletonSampleData.TagWriteOutcome.Stale
+AbletonSampleData.TagWriteOutcome.Stale.Deconstruct(out string! Error) -> void
+AbletonSampleData.TagWriteOutcome.Stale.Equals(AbletonSampleData.TagWriteOutcome.Stale? other) -> bool
+AbletonSampleData.TagWriteOutcome.Stale.Error.get -> string!
+AbletonSampleData.TagWriteOutcome.Stale.Error.init -> void
+AbletonSampleData.TagWriteOutcome.Stale.Stale(string! Error) -> void
+*REMOVED*AbletonSampleData.TagWriteOutcome.TagWriteOutcome() -> void
+AbletonSampleData.TagWriteOutcome.TagWriteOutcome(AbletonSampleData.TagWriteOutcome! original) -> void
+AbletonSampleData.TagWriteOutcome.Written
+AbletonSampleData.TagWriteOutcome.Written.Applied.get -> int
+AbletonSampleData.TagWriteOutcome.Written.Applied.init -> void
+AbletonSampleData.TagWriteOutcome.Written.Deconstruct(out int Applied) -> void
+AbletonSampleData.TagWriteOutcome.Written.Equals(AbletonSampleData.TagWriteOutcome.Written? other) -> bool
+AbletonSampleData.TagWriteOutcome.Written.Written(int Applied) -> void
+abstract AbletonSampleData.TagWriteOutcome.<Clone>$() -> AbletonSampleData.TagWriteOutcome!
+override AbletonSampleData.TagWriteOutcome.Rejected.<Clone>$() -> AbletonSampleData.TagWriteOutcome.Rejected!
+override AbletonSampleData.TagWriteOutcome.Rejected.Equals(object? obj) -> bool
+override AbletonSampleData.TagWriteOutcome.Rejected.GetHashCode() -> int
+override AbletonSampleData.TagWriteOutcome.Rejected.ToString() -> string!
+override AbletonSampleData.TagWriteOutcome.Stale.<Clone>$() -> AbletonSampleData.TagWriteOutcome.Stale!
+override AbletonSampleData.TagWriteOutcome.Stale.Equals(object? obj) -> bool
+override AbletonSampleData.TagWriteOutcome.Stale.GetHashCode() -> int
+override AbletonSampleData.TagWriteOutcome.Stale.ToString() -> string!
+override AbletonSampleData.TagWriteOutcome.Written.<Clone>$() -> AbletonSampleData.TagWriteOutcome.Written!
+override AbletonSampleData.TagWriteOutcome.Written.Equals(object? obj) -> bool
+override AbletonSampleData.TagWriteOutcome.Written.GetHashCode() -> int
+override AbletonSampleData.TagWriteOutcome.Written.ToString() -> string!
+override sealed AbletonSampleData.TagWriteOutcome.Rejected.Equals(AbletonSampleData.TagWriteOutcome? other) -> bool
+override sealed AbletonSampleData.TagWriteOutcome.Stale.Equals(AbletonSampleData.TagWriteOutcome? other) -> bool
+override sealed AbletonSampleData.TagWriteOutcome.Written.Equals(AbletonSampleData.TagWriteOutcome? other) -> bool
+*REMOVED*static AbletonSampleData.TagWriteOutcome.Rejected(string! error) -> AbletonSampleData.TagWriteOutcome!
+static AbletonSampleData.TagWriteOutcome.Rejected.operator !=(AbletonSampleData.TagWriteOutcome.Rejected? left, AbletonSampleData.TagWriteOutcome.Rejected? right) -> bool
+static AbletonSampleData.TagWriteOutcome.Rejected.operator ==(AbletonSampleData.TagWriteOutcome.Rejected? left, AbletonSampleData.TagWriteOutcome.Rejected? right) -> bool
+*REMOVED*static AbletonSampleData.TagWriteOutcome.Stale(string! error) -> AbletonSampleData.TagWriteOutcome!
+static AbletonSampleData.TagWriteOutcome.Stale.operator !=(AbletonSampleData.TagWriteOutcome.Stale? left, AbletonSampleData.TagWriteOutcome.Stale? right) -> bool
+static AbletonSampleData.TagWriteOutcome.Stale.operator ==(AbletonSampleData.TagWriteOutcome.Stale? left, AbletonSampleData.TagWriteOutcome.Stale? right) -> bool
+*REMOVED*static AbletonSampleData.TagWriteOutcome.Written(int applied) -> AbletonSampleData.TagWriteOutcome!
+static AbletonSampleData.TagWriteOutcome.Written.operator !=(AbletonSampleData.TagWriteOutcome.Written? left, AbletonSampleData.TagWriteOutcome.Written? right) -> bool
+static AbletonSampleData.TagWriteOutcome.Written.operator ==(AbletonSampleData.TagWriteOutcome.Written? left, AbletonSampleData.TagWriteOutcome.Written? right) -> bool
+virtual AbletonSampleData.TagWriteOutcome.EqualityContract.get -> System.Type!
+virtual AbletonSampleData.TagWriteOutcome.Equals(AbletonSampleData.TagWriteOutcome? other) -> bool
+virtual AbletonSampleData.TagWriteOutcome.PrintMembers(System.Text.StringBuilder! builder) -> bool

@@ -3,7 +3,7 @@ using Microsoft.Data.Sqlite;
 namespace AbletonSampleData.Tests;
 
 /// <summary>The reader against a database laid out like Live 12's, holding only the tables it reads.</summary>
-public class FileIndexReaderTests : IDisposable
+public sealed class FileIndexReaderTests : IDisposable
 {
     private const string Schema = """
         CREATE TABLE files (file_id INTEGER PRIMARY KEY AUTOINCREMENT, parent_id INTEGER, name TEXT);

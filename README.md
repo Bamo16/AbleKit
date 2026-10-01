@@ -73,8 +73,18 @@ var outcome = new FolderInfoWriter().Apply(
     [new TagAssignment { RelativePath = "Kick.wav", Keywords = ["Drums|Kick", "Key|C♯", "Key|Minor"] }]
 );
 
-if (outcome is { IsSuccess: false, IsStale: true })
-    Console.WriteLine("The store changed while writing; nothing was written. Try again.");
+switch (outcome)
+{
+    case TagWriteOutcome.Written(var applied):
+        Console.WriteLine($"Tagged {applied} files.");
+        break;
+    case TagWriteOutcome.Stale:
+        Console.WriteLine("The store changed while writing; nothing was written. Try again.");
+        break;
+    case TagWriteOutcome.Rejected(var error):
+        Console.WriteLine($"Nothing was written: {error}");
+        break;
+}
 ```
 
 What the writer does:

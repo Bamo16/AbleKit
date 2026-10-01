@@ -62,19 +62,19 @@ internal static class AnalysisFileParser
             return false;
 
         var layout = Walk(asd, types, instance);
-        var leaves = layout.Values;
+        var leaves = new LeafReader(asd, layout.Values);
 
         if (
             ReadMarkers(asd, layout) is not { } markers
-            || !TryBool(asd, leaves, IsWarpedPath, out var isWarped)
-            || !TryInt32(asd, leaves, ModePath, out var mode)
-            || !TryFloat(asd, leaves, NumeratorPath, out var numerator)
-            || !TryFloat(asd, leaves, DenominatorPath, out var denominator)
-            || !TryDouble(asd, leaves, LoopStartPath, out var loopStart)
-            || !TryDouble(asd, leaves, LoopEndPath, out var loopEnd)
-            || !TryDouble(asd, leaves, SampleOffsetPath, out var sampleOffset)
-            || !TryDouble(asd, leaves, OutMarkerPath, out var outMarker)
-            || !TryBool(asd, leaves, LoopOnPath, out var loopOn)
+            || !leaves.TryBool(IsWarpedPath, out var isWarped)
+            || !leaves.TryInt32(ModePath, out var mode)
+            || !leaves.TryFloat(NumeratorPath, out var numerator)
+            || !leaves.TryFloat(DenominatorPath, out var denominator)
+            || !leaves.TryDouble(LoopStartPath, out var loopStart)
+            || !leaves.TryDouble(LoopEndPath, out var loopEnd)
+            || !leaves.TryDouble(SampleOffsetPath, out var sampleOffset)
+            || !leaves.TryDouble(OutMarkerPath, out var outMarker)
+            || !leaves.TryBool(LoopOnPath, out var loopOn)
         )
             return false;
 
@@ -136,8 +136,10 @@ internal static class AnalysisFileParser
             var fields = new SchemaField[fieldCount];
 
             for (var f = 0; f < fieldCount; f++)
+            {
                 if (!TryReadField(asd, ref p, out fields[f]))
                     return false;
+            }
 
             types[name] = fields;
         }
@@ -222,8 +224,10 @@ internal static class AnalysisFileParser
         var p = instance;
 
         foreach (var field in fields)
+        {
             if (!TryWalk(asd, types, field, field.Name, ref p, layout))
                 break;
+        }
 
         return layout;
     }
@@ -353,8 +357,10 @@ internal static class AnalysisFileParser
         }
 
         for (var i = 0; i < count; i++)
+        {
             if (!TryWalkElement(asd, types, fields, $"{path}[{i}]", ref p, layout))
                 return false;
+        }
 
         return true;
     }
@@ -369,8 +375,10 @@ internal static class AnalysisFileParser
     )
     {
         foreach (var field in fields)
+        {
             if (!TryWalk(asd, types, field, $"{path}.{field.Name}", ref p, layout))
                 return false;
+        }
 
         return true;
     }
@@ -380,13 +388,14 @@ internal static class AnalysisFileParser
         if (!layout.Counts.TryGetValue(MarkersPath, out var count))
             return null;
 
+        var leaves = new LeafReader(asd, layout.Values);
         List<WarpMarker> markers = [];
 
         for (var i = 0; i < count; i++)
         {
             if (
-                !TryDouble(asd, layout.Values, $"{MarkersPath}[{i}].SecTime", out var seconds)
-                || !TryDouble(asd, layout.Values, $"{MarkersPath}[{i}].BeatTime", out var beat)
+                !leaves.TryDouble($"{MarkersPath}[{i}].SecTime", out var seconds)
+                || !leaves.TryDouble($"{MarkersPath}[{i}].BeatTime", out var beat)
             )
                 return null;
 
@@ -399,9 +408,11 @@ internal static class AnalysisFileParser
     /// <summary>The finest overview level's peaks, or null when the walk did not reach it.</summary>
     private static SampleOverview? ReadOverview(ReadOnlySpan<byte> asd, Layout layout)
     {
+        var leaves = new LeafReader(asd, layout.Values);
+
         if (
-            !TryInt32(asd, layout.Values, OverviewBinPath, out var log2)
-            || !TryInt32(asd, layout.Values, OverviewChannelsPath, out var channels)
+            !leaves.TryInt32(OverviewBinPath, out var log2)
+            || !leaves.TryInt32(OverviewChannelsPath, out var channels)
             || !layout.Arrays.TryGetValue(OverviewFinestPath, out var finest)
             || log2 is < 0 or > 30
             || channels < 1
@@ -429,34 +440,6 @@ internal static class AnalysisFileParser
         return new SampleOverview(1 << log2, peaks);
     }
 
-    private static bool TryBool(
-        ReadOnlySpan<byte> asd,
-        Dictionary<string, int> leaves,
-        string path,
-        out bool value
-    ) => TryRead(asd, leaves, path, bytes => bytes[0] is not 0, out value);
-
-    private static bool TryInt32(
-        ReadOnlySpan<byte> asd,
-        Dictionary<string, int> leaves,
-        string path,
-        out int value
-    ) => TryRead(asd, leaves, path, BinaryPrimitives.ReadInt32LittleEndian, out value);
-
-    private static bool TryFloat(
-        ReadOnlySpan<byte> asd,
-        Dictionary<string, int> leaves,
-        string path,
-        out float value
-    ) => TryRead(asd, leaves, path, BinaryPrimitives.ReadSingleLittleEndian, out value);
-
-    private static bool TryDouble(
-        ReadOnlySpan<byte> asd,
-        Dictionary<string, int> leaves,
-        string path,
-        out double value
-    ) => TryRead(asd, leaves, path, BinaryPrimitives.ReadDoubleLittleEndian, out value);
-
     private static int? ElementSizeOf(byte code) =>
         code switch
         {
@@ -476,32 +459,6 @@ internal static class AnalysisFileParser
             DoubleCode => sizeof(double),
             _ => null,
         };
-
-    private static bool TryRead<T>(
-        ReadOnlySpan<byte> asd,
-        Dictionary<string, int> leaves,
-        string path,
-        Func<ReadOnlySpan<byte>, T> read,
-        out T value
-    )
-    {
-        value = default!;
-
-        if (!TryOffset(leaves, path, Unsafe.SizeOf<T>(), asd.Length, out var at))
-            return false;
-
-        value = read(asd[at..]);
-
-        return true;
-    }
-
-    private static bool TryOffset(
-        Dictionary<string, int> leaves,
-        string path,
-        int size,
-        int length,
-        out int offset
-    ) => leaves.TryGetValue(path, out offset) && offset >= 0 && offset + size <= length;
 
     private static bool TryReadInt32(ReadOnlySpan<byte> asd, ref int p, out int value)
     {
@@ -569,5 +526,40 @@ internal static class AnalysisFileParser
         public Dictionary<string, int> Values { get; } = [];
         public Dictionary<string, (int Offset, int Count)> Arrays { get; } = [];
         public Dictionary<string, int> Counts { get; } = [];
+    }
+
+    /// <summary>Reads the fixed-width values the walk found, by path.</summary>
+    private readonly ref struct LeafReader(ReadOnlySpan<byte> asd, Dictionary<string, int> leaves)
+    {
+        private readonly ReadOnlySpan<byte> _asd = asd;
+        private readonly Dictionary<string, int> _leaves = leaves;
+
+        public bool TryBool(string path, out bool value) =>
+            TryRead(path, bytes => bytes[0] is not 0, out value);
+
+        public bool TryInt32(string path, out int value) =>
+            TryRead(path, BinaryPrimitives.ReadInt32LittleEndian, out value);
+
+        public bool TryFloat(string path, out float value) =>
+            TryRead(path, BinaryPrimitives.ReadSingleLittleEndian, out value);
+
+        public bool TryDouble(string path, out double value) =>
+            TryRead(path, BinaryPrimitives.ReadDoubleLittleEndian, out value);
+
+        private bool TryRead<T>(string path, Func<ReadOnlySpan<byte>, T> read, out T value)
+        {
+            value = default!;
+
+            if (
+                !_leaves.TryGetValue(path, out var offset)
+                || offset < 0
+                || offset + Unsafe.SizeOf<T>() > _asd.Length
+            )
+                return false;
+
+            value = read(_asd[offset..]);
+
+            return true;
+        }
     }
 }
