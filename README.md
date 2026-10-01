@@ -3,14 +3,14 @@
 A .NET library that reads what Ableton Live 12 knows about your samples:
 
 - **the analysis file** (`.asd`) beside each sample: its warp markers, warp mode, time signature,
-  default clip and waveform overview;
+  default clip, transients and waveform overview, which it can also write;
 - **the tags** in each folder's `Ableton Folder Info` XMP store, which it can also write;
 - **the tags** in Live's own file index, the database behind the browser.
 
 > [!CAUTION]
 > **Unofficial.** Not made, endorsed or supported by Ableton. The formats are undocumented and were
 > worked out from real files, so a Live update may break this library. Use at your own risk, and
-> back up your library before writing tags.
+> back up your library before writing tags or analysis files.
 
 The `.asd` layout is written up in full in
 [**The Ableton Live 12 analysis file**](docs/analysis-file-format.md), which, as far as I know, is
@@ -45,6 +45,54 @@ if (AnalysisFile.TryRead(@"C:\Samples\Break.wav.asd", out var analysis))
 
 `TryRead` returns false for a file it cannot read or does not recognise, and never throws for a
 bad file. `TryParse` does the same for bytes already in memory.
+
+## Write an analysis file
+
+Live only analyses a sample once you open it, and only writes a warp when you press *Save Default
+Clip*. To have a new stem arrive already warped, write its analysis file from a **sibling**: another
+stem of the same song that you have warped and saved.
+
+```csharp
+// The new stem, decoded to floats from -1 to 1 with its channels interleaved,
+// by whatever decoder you use (ffmpeg's -f f32le, NAudio, …).
+float[] samples = Decode(@"C:\Samples\Song (Vocal).flac");
+
+var outcome = new AnalysisFileWriter().WriteFromSibling(
+    siblingPath: @"C:\Samples\Song (Instrumental).flac.asd",
+    audioPath: @"C:\Samples\Song (Vocal).flac",
+    samples,
+    channelCount: 2,
+    transients: [new Transient(Position: 11025, Energy: 0.8f), /* … */]
+);
+
+switch (outcome)
+{
+    case AnalysisWriteOutcome.Written(var path):
+        Console.WriteLine($"Wrote {path}");
+        break;
+    case AnalysisWriteOutcome.Rejected(var error):
+        Console.WriteLine($"That sibling will not do: {error}");
+        break;
+    case AnalysisWriteOutcome.Failed(var error):
+        Console.WriteLine($"Could not read or write a file: {error}");
+        break;
+}
+```
+
+What the writer does:
+
+- **It copies the sibling's warp**: markers, default clip, warp mode and every clip setting.
+- **It draws the waveform from your samples**, exactly as Live would: it reproduces Live's own
+  overview bit for bit.
+- **It writes the transients you give it.** It does not detect them. Live shows them as ticks in
+  the clip view and warps from them; with none, Live shows none and does not look for its own.
+- **It refuses a sibling that does not fit**: one never saved, or one of a different length or
+  channel count. Stems of one song are usually the same length, but not always.
+- **It replaces any analysis file beside the audio**, writing through a temporary file moved into
+  place. The sibling can be the audio's own old file, to keep a warp after the audio was re-cut.
+
+Live accepts these files as its own and does not rewrite them, as far as it has been tried. See
+[Writing one](docs/analysis-file-format.md#writing-one) for what was tested.
 
 ## Read tags
 
@@ -109,7 +157,7 @@ default and optional backups, see [LiveTagger](https://github.com/17cupsofcoffee
 | | this | [LiveTagger](https://github.com/17cupsofcoffee/LiveTagger) | [AbletonParsing](https://github.com/DBraun/AbletonParsing) | [ableton-asd-parser](https://github.com/Verbalize-public/ableton-asd-parser) |
 |---|---|---|---|---|
 | Language | C# library | Rust command line | Python | Python |
-| Live 12 `.asd` | reads | | Live 9 and 10 | reads |
+| Live 12 `.asd` | reads, writes | | Live 9 and 10 | reads |
 | Warp mode, default clip, saved flag | yes | | | |
 | XMP tags | reads, writes | reads, writes | | |
 | Hidden keywords | reads | | | |

@@ -66,6 +66,20 @@ public sealed class AnalysisFileParserTests
     }
 
     [Fact]
+    public void Live_puts_a_transient_on_every_click()
+    {
+        // 32 clicks, one every half second at 44.1 kHz; Live places the first a frame late.
+        var transients = Read("sidecar-clicks.asd").Transients;
+
+        Assert.NotNull(transients);
+        Assert.Equal(
+            [1, .. Enumerable.Range(1, 31).Select(click => click * 22050)],
+            transients.Select(transient => transient.Position)
+        );
+        Assert.All(transients, transient => Assert.InRange(transient.Energy, 0.9f, 1f));
+    }
+
+    [Fact]
     public void A_sidecar_cut_short_before_its_overview_still_reads_without_one()
     {
         var warp = Read("sidecar-default-clip-saved.asd");

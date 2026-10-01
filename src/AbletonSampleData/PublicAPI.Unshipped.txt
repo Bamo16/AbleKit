@@ -1,4 +1,33 @@
 #nullable enable
+*REMOVED*AbletonSampleData.AnalysisFile.AnalysisFile(bool IsWarped, AbletonSampleData.WarpMode Mode, int TimeSignatureNumerator, int TimeSignatureDenominator, System.Collections.Generic.IReadOnlyList<AbletonSampleData.WarpMarker>! Markers, AbletonSampleData.DefaultClip? DefaultClip = null, AbletonSampleData.SampleOverview? Overview = null) -> void
+AbletonSampleData.AnalysisFile.AnalysisFile(bool IsWarped, AbletonSampleData.WarpMode Mode, int TimeSignatureNumerator, int TimeSignatureDenominator, System.Collections.Generic.IReadOnlyList<AbletonSampleData.WarpMarker>! Markers, AbletonSampleData.DefaultClip? DefaultClip = null, AbletonSampleData.SampleOverview? Overview = null, System.Collections.Generic.IReadOnlyList<AbletonSampleData.Transient>? Transients = null) -> void
+*REMOVED*AbletonSampleData.AnalysisFile.Deconstruct(out bool IsWarped, out AbletonSampleData.WarpMode Mode, out int TimeSignatureNumerator, out int TimeSignatureDenominator, out System.Collections.Generic.IReadOnlyList<AbletonSampleData.WarpMarker>! Markers, out AbletonSampleData.DefaultClip? DefaultClip, out AbletonSampleData.SampleOverview? Overview) -> void
+AbletonSampleData.AnalysisFile.Deconstruct(out bool IsWarped, out AbletonSampleData.WarpMode Mode, out int TimeSignatureNumerator, out int TimeSignatureDenominator, out System.Collections.Generic.IReadOnlyList<AbletonSampleData.WarpMarker>! Markers, out AbletonSampleData.DefaultClip? DefaultClip, out AbletonSampleData.SampleOverview? Overview, out System.Collections.Generic.IReadOnlyList<AbletonSampleData.Transient>? Transients) -> void
+AbletonSampleData.AnalysisFile.Transients.get -> System.Collections.Generic.IReadOnlyList<AbletonSampleData.Transient>?
+AbletonSampleData.AnalysisFile.Transients.init -> void
+AbletonSampleData.AnalysisFileWriter
+AbletonSampleData.AnalysisFileWriter.AnalysisFileWriter() -> void
+AbletonSampleData.AnalysisFileWriter.WriteFromSibling(string! siblingPath, string! audioPath, System.ReadOnlySpan<float> samples, int channelCount, System.Collections.Generic.IReadOnlyList<AbletonSampleData.Transient>! transients) -> AbletonSampleData.AnalysisWriteOutcome!
+AbletonSampleData.AnalysisWriteOutcome
+AbletonSampleData.AnalysisWriteOutcome.AnalysisWriteOutcome(AbletonSampleData.AnalysisWriteOutcome! original) -> void
+AbletonSampleData.AnalysisWriteOutcome.Failed
+AbletonSampleData.AnalysisWriteOutcome.Failed.Deconstruct(out string! Error) -> void
+AbletonSampleData.AnalysisWriteOutcome.Failed.Equals(AbletonSampleData.AnalysisWriteOutcome.Failed? other) -> bool
+AbletonSampleData.AnalysisWriteOutcome.Failed.Error.get -> string!
+AbletonSampleData.AnalysisWriteOutcome.Failed.Error.init -> void
+AbletonSampleData.AnalysisWriteOutcome.Failed.Failed(string! Error) -> void
+AbletonSampleData.AnalysisWriteOutcome.Rejected
+AbletonSampleData.AnalysisWriteOutcome.Rejected.Deconstruct(out string! Error) -> void
+AbletonSampleData.AnalysisWriteOutcome.Rejected.Equals(AbletonSampleData.AnalysisWriteOutcome.Rejected? other) -> bool
+AbletonSampleData.AnalysisWriteOutcome.Rejected.Error.get -> string!
+AbletonSampleData.AnalysisWriteOutcome.Rejected.Error.init -> void
+AbletonSampleData.AnalysisWriteOutcome.Rejected.Rejected(string! Error) -> void
+AbletonSampleData.AnalysisWriteOutcome.Written
+AbletonSampleData.AnalysisWriteOutcome.Written.Deconstruct(out string! Path) -> void
+AbletonSampleData.AnalysisWriteOutcome.Written.Equals(AbletonSampleData.AnalysisWriteOutcome.Written? other) -> bool
+AbletonSampleData.AnalysisWriteOutcome.Written.Path.get -> string!
+AbletonSampleData.AnalysisWriteOutcome.Written.Path.init -> void
+AbletonSampleData.AnalysisWriteOutcome.Written.Written(string! Path) -> void
 *REMOVED*AbletonSampleData.TagWriteOutcome.<Clone>$() -> AbletonSampleData.TagWriteOutcome!
 *REMOVED*AbletonSampleData.TagWriteOutcome.Applied.get -> int
 *REMOVED*AbletonSampleData.TagWriteOutcome.Applied.init -> void
@@ -29,7 +58,32 @@ AbletonSampleData.TagWriteOutcome.Written.Applied.init -> void
 AbletonSampleData.TagWriteOutcome.Written.Deconstruct(out int Applied) -> void
 AbletonSampleData.TagWriteOutcome.Written.Equals(AbletonSampleData.TagWriteOutcome.Written? other) -> bool
 AbletonSampleData.TagWriteOutcome.Written.Written(int Applied) -> void
+AbletonSampleData.Transient
+AbletonSampleData.Transient.Deconstruct(out int Position, out float Energy) -> void
+AbletonSampleData.Transient.Energy.get -> float
+AbletonSampleData.Transient.Energy.init -> void
+AbletonSampleData.Transient.Equals(AbletonSampleData.Transient other) -> bool
+AbletonSampleData.Transient.Position.get -> int
+AbletonSampleData.Transient.Position.init -> void
+AbletonSampleData.Transient.Transient() -> void
+AbletonSampleData.Transient.Transient(int Position, float Energy) -> void
+abstract AbletonSampleData.AnalysisWriteOutcome.<Clone>$() -> AbletonSampleData.AnalysisWriteOutcome!
 abstract AbletonSampleData.TagWriteOutcome.<Clone>$() -> AbletonSampleData.TagWriteOutcome!
+override AbletonSampleData.AnalysisWriteOutcome.Equals(object? obj) -> bool
+override AbletonSampleData.AnalysisWriteOutcome.Failed.<Clone>$() -> AbletonSampleData.AnalysisWriteOutcome.Failed!
+override AbletonSampleData.AnalysisWriteOutcome.Failed.Equals(object? obj) -> bool
+override AbletonSampleData.AnalysisWriteOutcome.Failed.GetHashCode() -> int
+override AbletonSampleData.AnalysisWriteOutcome.Failed.ToString() -> string!
+override AbletonSampleData.AnalysisWriteOutcome.GetHashCode() -> int
+override AbletonSampleData.AnalysisWriteOutcome.Rejected.<Clone>$() -> AbletonSampleData.AnalysisWriteOutcome.Rejected!
+override AbletonSampleData.AnalysisWriteOutcome.Rejected.Equals(object? obj) -> bool
+override AbletonSampleData.AnalysisWriteOutcome.Rejected.GetHashCode() -> int
+override AbletonSampleData.AnalysisWriteOutcome.Rejected.ToString() -> string!
+override AbletonSampleData.AnalysisWriteOutcome.ToString() -> string!
+override AbletonSampleData.AnalysisWriteOutcome.Written.<Clone>$() -> AbletonSampleData.AnalysisWriteOutcome.Written!
+override AbletonSampleData.AnalysisWriteOutcome.Written.Equals(object? obj) -> bool
+override AbletonSampleData.AnalysisWriteOutcome.Written.GetHashCode() -> int
+override AbletonSampleData.AnalysisWriteOutcome.Written.ToString() -> string!
 override AbletonSampleData.TagWriteOutcome.Rejected.<Clone>$() -> AbletonSampleData.TagWriteOutcome.Rejected!
 override AbletonSampleData.TagWriteOutcome.Rejected.Equals(object? obj) -> bool
 override AbletonSampleData.TagWriteOutcome.Rejected.GetHashCode() -> int
@@ -42,9 +96,21 @@ override AbletonSampleData.TagWriteOutcome.Written.<Clone>$() -> AbletonSampleDa
 override AbletonSampleData.TagWriteOutcome.Written.Equals(object? obj) -> bool
 override AbletonSampleData.TagWriteOutcome.Written.GetHashCode() -> int
 override AbletonSampleData.TagWriteOutcome.Written.ToString() -> string!
+override AbletonSampleData.Transient.GetHashCode() -> int
+override sealed AbletonSampleData.AnalysisWriteOutcome.Failed.Equals(AbletonSampleData.AnalysisWriteOutcome? other) -> bool
+override sealed AbletonSampleData.AnalysisWriteOutcome.Rejected.Equals(AbletonSampleData.AnalysisWriteOutcome? other) -> bool
+override sealed AbletonSampleData.AnalysisWriteOutcome.Written.Equals(AbletonSampleData.AnalysisWriteOutcome? other) -> bool
 override sealed AbletonSampleData.TagWriteOutcome.Rejected.Equals(AbletonSampleData.TagWriteOutcome? other) -> bool
 override sealed AbletonSampleData.TagWriteOutcome.Stale.Equals(AbletonSampleData.TagWriteOutcome? other) -> bool
 override sealed AbletonSampleData.TagWriteOutcome.Written.Equals(AbletonSampleData.TagWriteOutcome? other) -> bool
+static AbletonSampleData.AnalysisWriteOutcome.Failed.operator !=(AbletonSampleData.AnalysisWriteOutcome.Failed? left, AbletonSampleData.AnalysisWriteOutcome.Failed? right) -> bool
+static AbletonSampleData.AnalysisWriteOutcome.Failed.operator ==(AbletonSampleData.AnalysisWriteOutcome.Failed? left, AbletonSampleData.AnalysisWriteOutcome.Failed? right) -> bool
+static AbletonSampleData.AnalysisWriteOutcome.Rejected.operator !=(AbletonSampleData.AnalysisWriteOutcome.Rejected? left, AbletonSampleData.AnalysisWriteOutcome.Rejected? right) -> bool
+static AbletonSampleData.AnalysisWriteOutcome.Rejected.operator ==(AbletonSampleData.AnalysisWriteOutcome.Rejected? left, AbletonSampleData.AnalysisWriteOutcome.Rejected? right) -> bool
+static AbletonSampleData.AnalysisWriteOutcome.Written.operator !=(AbletonSampleData.AnalysisWriteOutcome.Written? left, AbletonSampleData.AnalysisWriteOutcome.Written? right) -> bool
+static AbletonSampleData.AnalysisWriteOutcome.Written.operator ==(AbletonSampleData.AnalysisWriteOutcome.Written? left, AbletonSampleData.AnalysisWriteOutcome.Written? right) -> bool
+static AbletonSampleData.AnalysisWriteOutcome.operator !=(AbletonSampleData.AnalysisWriteOutcome? left, AbletonSampleData.AnalysisWriteOutcome? right) -> bool
+static AbletonSampleData.AnalysisWriteOutcome.operator ==(AbletonSampleData.AnalysisWriteOutcome? left, AbletonSampleData.AnalysisWriteOutcome? right) -> bool
 *REMOVED*static AbletonSampleData.TagWriteOutcome.Rejected(string! error) -> AbletonSampleData.TagWriteOutcome!
 static AbletonSampleData.TagWriteOutcome.Rejected.operator !=(AbletonSampleData.TagWriteOutcome.Rejected? left, AbletonSampleData.TagWriteOutcome.Rejected? right) -> bool
 static AbletonSampleData.TagWriteOutcome.Rejected.operator ==(AbletonSampleData.TagWriteOutcome.Rejected? left, AbletonSampleData.TagWriteOutcome.Rejected? right) -> bool
@@ -54,6 +120,13 @@ static AbletonSampleData.TagWriteOutcome.Stale.operator ==(AbletonSampleData.Tag
 *REMOVED*static AbletonSampleData.TagWriteOutcome.Written(int applied) -> AbletonSampleData.TagWriteOutcome!
 static AbletonSampleData.TagWriteOutcome.Written.operator !=(AbletonSampleData.TagWriteOutcome.Written? left, AbletonSampleData.TagWriteOutcome.Written? right) -> bool
 static AbletonSampleData.TagWriteOutcome.Written.operator ==(AbletonSampleData.TagWriteOutcome.Written? left, AbletonSampleData.TagWriteOutcome.Written? right) -> bool
+static AbletonSampleData.Transient.operator !=(AbletonSampleData.Transient left, AbletonSampleData.Transient right) -> bool
+static AbletonSampleData.Transient.operator ==(AbletonSampleData.Transient left, AbletonSampleData.Transient right) -> bool
+virtual AbletonSampleData.AnalysisWriteOutcome.EqualityContract.get -> System.Type!
+virtual AbletonSampleData.AnalysisWriteOutcome.Equals(AbletonSampleData.AnalysisWriteOutcome? other) -> bool
+virtual AbletonSampleData.AnalysisWriteOutcome.PrintMembers(System.Text.StringBuilder! builder) -> bool
 virtual AbletonSampleData.TagWriteOutcome.EqualityContract.get -> System.Type!
 virtual AbletonSampleData.TagWriteOutcome.Equals(AbletonSampleData.TagWriteOutcome? other) -> bool
 virtual AbletonSampleData.TagWriteOutcome.PrintMembers(System.Text.StringBuilder! builder) -> bool
+~override AbletonSampleData.Transient.Equals(object obj) -> bool
+~override AbletonSampleData.Transient.ToString() -> string

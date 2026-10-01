@@ -56,6 +56,24 @@ public sealed class AnalysisFileRealLibraryTests
     }
 
     [Fact]
+    public void Transients_never_go_backwards_and_their_energies_are_at_most_one()
+    {
+        // A position repeats now and then in Live's own lists, so equal neighbours are allowed.
+        var disordered = Warps()
+            .Where(s =>
+                s.Warp.Transients is not { } transients
+                || transients.Any(transient => transient.Energy is not (> 0 and <= 1))
+                || transients
+                    .Zip(transients.Skip(1))
+                    .Any(pair => pair.Second.Position < pair.First.Position)
+            )
+            .Select(s => s.File)
+            .ToList();
+
+        Assert.Empty(disordered);
+    }
+
+    [Fact]
     public void Markers_advance_in_both_seconds_and_beats()
     {
         var outOfOrder = Warps()

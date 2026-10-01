@@ -3,6 +3,14 @@ using System.Diagnostics.CodeAnalysis;
 namespace AbletonSampleData;
 
 /// <summary>What an analysis file, the <c>.asd</c> beside a sample, records about how Live warps it.</summary>
+/// <param name="IsWarped">The clip's Warp switch, which is on even for samples nobody has warped.</param>
+/// <param name="Mode">The algorithm Live stretches the sample with.</param>
+/// <param name="TimeSignatureNumerator">The clip's time signature, 4 in 4/4.</param>
+/// <param name="TimeSignatureDenominator">The clip's time signature, the second 4 in 4/4.</param>
+/// <param name="Markers">The warp markers, in order, Live's hidden last one included; empty until the default clip is saved.</param>
+/// <param name="DefaultClip">The saved default clip's start and end; null until it is saved.</param>
+/// <param name="Overview">The waveform Live draws; null when the file ends before it.</param>
+/// <param name="Transients">The transients Live detected, in order; null when the file ends before them.</param>
 public sealed record AnalysisFile(
     bool IsWarped,
     WarpMode Mode,
@@ -10,7 +18,8 @@ public sealed record AnalysisFile(
     int TimeSignatureDenominator,
     IReadOnlyList<WarpMarker> Markers,
     DefaultClip? DefaultClip = null,
-    SampleOverview? Overview = null
+    SampleOverview? Overview = null,
+    IReadOnlyList<Transient>? Transients = null
 )
 {
     /// <summary>Reads the analysis file at <paramref name="path"/>; false when it is unreadable or unrecognised.</summary>
@@ -81,12 +90,16 @@ public sealed record AnalysisFile(
 /// The range Ableton pulls in when the sample is dragged out, in beats; null until the user
 /// presses <em>Save Default Clip</em>, which is also what writes the markers.
 /// </summary>
+/// <param name="Start">The start marker, in beats on Live's grid.</param>
+/// <param name="End">The end marker, in beats on Live's grid.</param>
 public sealed record DefaultClip(double Start, double End);
 
 /// <summary>
 /// The loudest sample in each bin of the waveform Ableton draws, at its finest level; enough to
 /// tell silence from sound.
 /// </summary>
+/// <param name="SamplesPerBin">How many sample frames each peak covers.</param>
+/// <param name="Peaks">The loudest absolute sample value in each bin, from 0 to 1, across all channels.</param>
 public sealed record SampleOverview(int SamplesPerBin, IReadOnlyList<float> Peaks)
 {
     /// <summary>The loudest sample between two sample positions, 0 where the overview ends.</summary>
@@ -107,6 +120,11 @@ public sealed record SampleOverview(int SamplesPerBin, IReadOnlyList<float> Peak
 /// <param name="Seconds">Position in the audio file.</param>
 /// <param name="Beat">Position on Ableton's grid.</param>
 public readonly record struct WarpMarker(double Seconds, double Beat);
+
+/// <summary>A transient, which Live draws as a tick in the clip view and warps from.</summary>
+/// <param name="Position">Where the attack starts, in sample frames from the start of the audio.</param>
+/// <param name="Energy">How strong the transient is, from 0 to 1.</param>
+public readonly record struct Transient(int Position, float Energy);
 
 /// <summary>The algorithm Live stretches the sample with, as chosen in its clip view.</summary>
 public enum WarpMode

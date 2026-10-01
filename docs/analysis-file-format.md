@@ -7,7 +7,7 @@ clip starts and ends.
 
 Ableton has never documented the format. This page describes what is known about the Live 12
 version, how it was worked out, and how confident each part is. It is the reference behind the
-[AbletonSampleData](../README.md) reader, but nothing here depends on that library.
+[AbletonSampleData](../README.md) reader and writer, but nothing here depends on that library.
 
 **Unofficial.** None of this comes from Ableton, and Ableton owes it no stability. A Live update
 can change any of it.
@@ -52,7 +52,7 @@ Byte order is **little-endian**, except the lengths of class names, which are bi
 |---|---|
 | 2 | `06 49` in every file (measured, 947 of 947) |
 | 4 | int32 *n* |
-| 4 × *n* | *n* int32 values rising from 0 to the audio's total sample count (measured). What they mark is **not known**: not the transients, and not a FLAC seek table, since a WAV's file has one too |
+| 4 × *n* | *n* int32 values rising from 0 to the audio's length in frames, which the last one equals exactly (measured). What the others mark is **not known**: not the transients, and not a FLAC seek table, since a WAV's file has one too. They differ between stems of one song, even in *n*, so they come from the audio's content |
 | 12 | three int32s, `0, 0, 100` in every file (measured, 947 of 947) |
 | 4 | int32 *m*: 4 in every stereo file (947 of 947), 2 in a mono one (observed, 2026-10-01) |
 | *m* | *m* zero bytes, probably two per channel |
@@ -169,9 +169,19 @@ view lives only in the set, and *Save Default Clip* does not keep it (from the s
 
 | field | type | meaning |
 |---|---|---|
-| `OnSets.Positions` | int32 array, samples | **the transients Live detected**. Different per file, even for stems of one song (measured) |
-| `OnSets.TransitionEnergies` | float32 array | one strength per transient, at most 1.0 |
-| `UserOnsets` | array of `OnsetEvent` (`Time` seconds, `Energy`, `IsVolatile`) | the transients as the saved clip holds them; empty until *Save Default Clip* (observed) |
+| `OnSets.Positions` | int32 array, frames | **the transients Live detected**. Different per file, even for stems of one song (measured). In order, but a position is repeated now and then: 15 times in 881,841 transients (measured, 2026-10-01) |
+| `OnSets.TransitionEnergies` | float32 array | one strength per transient, from 0.0002 to 1.0 in the library (measured) |
+| `UserOnsets.HasUserOnsets` | bool | **which list the clip shows**: on, `UserOnsets`; off, `OnSets` (observed, 2026-10-01) |
+| `UserOnsets.UserOnsets` | array of `OnsetEvent` (`Time` seconds, `Energy`, `IsVolatile`) | the transients as the saved clip holds them; empty until *Save Default Clip* (observed) |
+
+Live places a transient at the start of the attack, about 9 ms before the hit's peak, and at
+least about 40 ms after the one before (measured on stems, 2026-10-01). On a click track it lands
+exactly on each click's first frame.
+
+**121 of the library's 959 saved warps show no transients** (measured, 2026-10-01): their
+`HasUserOnsets` is on, but their list holds only the volatile onsets under the warp markers. They
+were all saved since August 2026. *Reset Transients* in the clip view fixes one (observed). What
+causes it is not known; a save during Live's grey decoding pass is a guess.
 
 **A volatile onset is the transient Live adds under a warp marker** (measured): 15,469 of the
 library's 15,474 volatile onsets sit exactly on a marker's time, all with energy `double.MaxValue`.
@@ -192,6 +202,11 @@ found says what makes Live fill it in. Do not treat it as a tempo source.
 | `OverView.OverViewLevels` | list of float16 arrays | **the waveform**: a minimum and a maximum per channel per bin, interleaved (min₀ max₀ min₁ max₁), as float16 **truncated toward zero**. Each coarser level is the minimum and maximum over the finer level's bins. Reproduced bit for bit from the decoded audio, a WAV and a 24-bit FLAC, at every level (measured, 2026-10-01) |
 | `OverView.SamplesPerBinLog2` | int32 | level *k*'s bin is 2^(`SamplesPerBinLog2` × (*k* + 1)) samples. 7 up to 379 s of audio, 8 from 387 s |
 | `OverView.ChannelCount`, `.Version` | int32 | 2 and 2 everywhere |
+
+The overview rule is checked by a writer too: built from the decoded audio, it reproduced Live's
+overview for every level of the stereo and mono click fixtures, and for three vocal stems of 4 to 5
+minutes (measured, 2026-10-01). Two more stems differed, and both had stale analysis: their
+`OriginalFileSize` was not their audio's.
 
 The overview is most of the file: in a 509 KB file, the finest overview level is 455 KB, the
 head's table 30 KB and the transients 18 KB. The clip settings and the markers are under 300
@@ -235,28 +250,51 @@ With the first marker at 0 s and beat 0, this is the hidden handle alone: a warp
 
 ## Writing one
 
-Nothing on this page has been used to generate a file from scratch. What is known about how Live
-treats a file it did not write, from editing existing files (observed, 2026-09-15 and 2026-09-30):
+[AbletonSampleData](../README.md)'s `AnalysisFileWriter` writes a complete file for audio Live
+has not seen, borrowing everything it cannot compute from a **sibling**: another stem of the same
+song, warped and saved. It keeps the sibling's head, schema, clip and warp, and replaces what comes
+from the audio: the overview, the transients and `OriginalFileSize`. It switches `HasUserOnsets`
+off and empties `UserOnsets`, since the sibling's user onsets sit on the sibling's audio.
+
+What Live does with files it did not write (observed, 2026-09-15 to 2026-10-01):
 
 - **Live applies markers it did not write.** A file whose markers were patched to a different
   tempo played at the patched tempo.
 - **The default clip saved byte is required.** The same patched file with that byte set to 0 was
   ignored entirely: the sample came in unwarped.
-- **Live does not check that the file belongs to its audio.** Another song's analysis file,
-  renamed to sit beside a different sample of a different length, was applied without complaint.
-  A writer has to guarantee the right file itself.
-- **Live did not rewrite any of the edited files** on loading them.
+- **Live does not check that the file belongs to its audio.** A sibling's file, copied unchanged
+  beside a vocal stem, was accepted and warped it correctly, but Live drew the sibling's waveform
+  and transients and never re-analysed. A writer has to guarantee the right file itself.
+- **The analysis has to be there.** The sibling's file cut short after the warp section, with or
+  without the head's table, was rejected: Live re-analysed the audio, overwrote the file and lost
+  the warp.
+- **A recomputed overview is accepted.** The sibling's complete file with the overview rebuilt
+  from the stem's own audio warped, played cleanly and showed the stem's waveform. Only the
+  transients were wrong: the sibling's.
+- **No transients is accepted too.** The same file with an empty transient list warped; Live
+  showed no transients, offered no *Reset Transients*, and did not detect any itself.
+- **Live did not rewrite any of these files** on loading them, nor on the grey-to-black pass when
+  clips are moved, which is most likely its decoding cache.
 - **A marker list can be replaced in place.** Swapping one file's marker run and its id allocator
   for another's was enough; there are no offsets to fix.
 
+**Live never analyses a file nobody has opened**: 75 of the 96 audio files in a staging folder
+had no analysis file (measured, 2026-10-01). Making a sample arrive warped therefore means writing
+the whole file, transients included.
+
+**Stems of one song are not always the same length.** In one pair of five the vocal was 645
+frames longer than the instrumental (measured, 2026-10-01). The writer compares the sibling's
+length, the last entry of its head's table, with the audio's, and refuses a mismatch: the head
+would be wrong and the overview a different size.
+
 ## What is not known
 
-- What the head's table of sample positions marks.
+- What the head's table of sample positions marks, beyond its last entry. A sibling's table was
+  harmless beside a stem it was not made from (observed, 2026-10-01).
 - The meaning of the fixed fields guessed above, and the warp mode numbers other than 0, 3, 4 and 6
   (Beats, Re-Pitch, Complex and Complex Pro; Beats and Re-Pitch observed 2026-10-01).
 - Whether `IsWarped` is ever false in practice.
-- Whether a file with someone else's transients plays and warps correctly. A file with no overview
-  and no transients is not accepted: Live re-analyses it and drops its warp (observed, 2026-10-01).
+- What makes Live fill in `AufTaktData`. The writer keeps the sibling's, as harmless (observed).
 - Anything about Live 11 and earlier. DBraun/AbletonParsing reads Live 9 and 10, whose files are
   laid out differently.
 

@@ -3,7 +3,7 @@
         <Version>0.1.0-preview.1</Version>
         <PackageId>AbletonSampleData</PackageId>
         <Authors>Bamo16</Authors>
-        <Description>Reads what Ableton Live 12 knows about your samples: the warp markers and default clip in a .asd analysis file, and the tags in its XMP stores and file index. Unofficial.</Description>
+        <Description>Reads what Ableton Live 12 knows about your samples: the warp markers, default clip and transients in a .asd analysis file, and the tags in its XMP stores and file index. Writes analysis files, so a stem arrives in Live already warped. Unofficial.</Description>
         <PackageTags>ableton;ableton-live;asd;warp;xmp;tags;audio</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>

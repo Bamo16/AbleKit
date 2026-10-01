@@ -38,10 +38,14 @@ internal static class AnalysisFileParser
     private const string OutMarkerPath = "OutMarker.Value";
     private const string LoopOnPath = "LoopOn.Value";
     private const string MarkersPath = "WarpMarkers";
-    private const string OverviewBinPath = "OverView.SamplesPerBinLog2";
-    private const string OverviewChannelsPath = "OverView.ChannelCount";
     private const string OverviewFinestPath = "OverView.OverViewLevels[0].InterleavedBinData";
     private const string SampleDataClass = "SampleData";
+
+    internal const string OverviewBinPath = "OverView.SamplesPerBinLog2";
+    internal const string OverviewChannelsPath = "OverView.ChannelCount";
+    internal const string OverviewLevelsPath = "OverView.OverViewLevels";
+    internal const string TransientPositionsPath = "OnSets.Positions";
+    internal const string TransientEnergiesPath = "OnSets.TransitionEnergies";
     private const string RemoteableArrayClass = "RemoteableArray";
 
     private static readonly byte[] ChunkMagic = [0xAB, 0x1E, 0x56, 0x78];
@@ -55,13 +59,10 @@ internal static class AnalysisFileParser
     {
         warp = null;
 
-        if (
-            !TryReadSchema(asd, out var types, out var sampleData, out var instance)
-            || !TryReadSavedFlag(asd, sampleData, out var saved)
-        )
+        if (!TryScan(asd, out var scan))
             return false;
 
-        var layout = Walk(asd, types, instance);
+        var layout = scan.Layout;
         var leaves = new LeafReader(asd, layout.Values);
 
         if (
@@ -84,15 +85,32 @@ internal static class AnalysisFileParser
             (int)numerator,
             (int)denominator,
             markers,
-            (saved, loopOn) switch
+            (scan.Saved, loopOn) switch
             {
                 (false, _) => null,
                 // With Loop on, the loop fields hold the loop, not the clip's start and end.
                 (true, true) => new DefaultClip(loopStart + sampleOffset, outMarker),
                 (true, false) => new DefaultClip(loopStart, loopEnd),
             },
-            ReadOverview(asd, layout)
+            ReadOverview(asd, layout),
+            ReadTransients(asd, layout)
         );
+
+        return true;
+    }
+
+    /// <summary>Reads the head and the schema, and walks the instance to find where each value is.</summary>
+    internal static bool TryScan(ReadOnlySpan<byte> asd, [NotNullWhen(true)] out Scan? scan)
+    {
+        scan = null;
+
+        if (
+            !TryReadSchema(asd, out var types, out var sampleData, out var instance)
+            || !TryReadHead(asd, sampleData, out var saved, out var frames)
+        )
+            return false;
+
+        scan = new Scan(saved, frames, Walk(asd, types, instance));
 
         return true;
     }
@@ -150,12 +168,19 @@ internal static class AnalysisFileParser
     }
 
     /// <summary>
-    /// The byte ending the head: 1 once <em>Save Default Clip</em> has been pressed. Found by walking
-    /// the head's table, and only trusted if that walk lands on the chunk holding the clip.
+    /// The byte ending the head, 1 once <em>Save Default Clip</em> has been pressed, and the last
+    /// entry of the head's table, which is the audio's length in frames. Found by walking the table,
+    /// and only trusted if that walk lands on the chunk holding the clip.
     /// </summary>
-    private static bool TryReadSavedFlag(ReadOnlySpan<byte> asd, int sampleData, out bool saved)
+    private static bool TryReadHead(
+        ReadOnlySpan<byte> asd,
+        int sampleData,
+        out bool saved,
+        out int? frames
+    )
     {
         saved = false;
+        frames = null;
 
         var p = HeadCountOffset;
 
@@ -187,6 +212,9 @@ internal static class AnalysisFileParser
             return false;
 
         saved = asd[(int)flag] is 1;
+
+        if (count > 0)
+            frames = BinaryPrimitives.ReadInt32LittleEndian(asd[((int)trailer - sizeof(int))..]);
 
         return true;
     }
@@ -289,6 +317,8 @@ internal static class AnalysisFileParser
             return true;
         }
 
+        var start = p;
+
         if (
             ElementSizeOf(code) is not { } element
             || !TryReadInt32(asd, ref p, out var count)
@@ -297,7 +327,7 @@ internal static class AnalysisFileParser
         )
             return false;
 
-        layout.Arrays[path] = (p, count);
+        layout.Arrays[path] = new ArrayField(start, p, count, p + count * element);
         p += count * element;
 
         return true;
@@ -346,6 +376,8 @@ internal static class AnalysisFileParser
         Layout layout
     )
     {
+        var start = p;
+
         if (
             !TryReadInt32(asd, ref p, out var count)
             || count < 0
@@ -357,6 +389,8 @@ internal static class AnalysisFileParser
 
         layout.Counts[path] = count;
 
+        var offset = p;
+
         // Packed fixed-width elements are stepped over whole; nothing reads them one by one.
         if (fields.All(field => field.Class is null && SizeOf(field.Code) is not null))
         {
@@ -365,17 +399,18 @@ internal static class AnalysisFileParser
             if (p + (long)count * size > asd.Length)
                 return false;
 
-            layout.Arrays[path] = (p, count);
             p += count * size;
-
-            return true;
         }
-
-        for (var i = 0; i < count; i++)
+        else
         {
-            if (!TryWalkElement(asd, types, fields, $"{path}[{i}]", ref p, layout))
-                return false;
+            for (var i = 0; i < count; i++)
+            {
+                if (!TryWalkElement(asd, types, fields, $"{path}[{i}]", ref p, layout))
+                    return false;
+            }
         }
+
+        layout.Arrays[path] = new ArrayField(start, offset, count, p);
 
         return true;
     }
@@ -454,6 +489,38 @@ internal static class AnalysisFileParser
 
         return new SampleOverview(1 << log2, peaks);
     }
+
+    /// <summary>The transients Live detected, or null when the walk did not reach them.</summary>
+    private static List<Transient>? ReadTransients(ReadOnlySpan<byte> asd, Layout layout)
+    {
+        if (
+            !layout.Arrays.TryGetValue(TransientPositionsPath, out var positions)
+            || !layout.Arrays.TryGetValue(TransientEnergiesPath, out var energies)
+            || positions.Count != energies.Count
+        )
+            return null;
+
+        List<Transient> transients = new(positions.Count);
+
+        for (var i = 0; i < positions.Count; i++)
+        {
+            transients.Add(
+                new Transient(
+                    BinaryPrimitives.ReadInt32LittleEndian(
+                        asd[(positions.Offset + i * sizeof(int))..]
+                    ),
+                    BinaryPrimitives.ReadSingleLittleEndian(
+                        asd[(energies.Offset + i * sizeof(float))..]
+                    )
+                )
+            );
+        }
+
+        return transients;
+    }
+
+    internal static string LevelPath(int level) =>
+        $"{OverviewLevelsPath}[{level}].InterleavedBinData";
 
     private static int? ElementSizeOf(byte code) =>
         code switch
@@ -536,15 +603,25 @@ internal static class AnalysisFileParser
 
     private readonly record struct SchemaField(string Name, byte Code, string? Class);
 
-    private sealed class Layout
+    /// <summary>What a scan found: the saved byte, the audio's length the head records, and the layout.</summary>
+    internal sealed record Scan(bool Saved, int? Frames, Layout Layout);
+
+    /// <summary>Where each value, array and list of the instance is, keyed by dotted path.</summary>
+    internal sealed class Layout
     {
         public Dictionary<string, int> Values { get; } = [];
-        public Dictionary<string, (int Offset, int Count)> Arrays { get; } = [];
+        public Dictionary<string, ArrayField> Arrays { get; } = [];
         public Dictionary<string, int> Counts { get; } = [];
     }
 
+    /// <summary>
+    /// An array from its count, at <see cref="Start"/>, to one past its last byte, at <see cref="End"/>;
+    /// the elements begin at <see cref="Offset"/>.
+    /// </summary>
+    internal readonly record struct ArrayField(int Start, int Offset, int Count, int End);
+
     /// <summary>Reads the fixed-width values the walk found, by path.</summary>
-    private readonly ref struct LeafReader(ReadOnlySpan<byte> asd, Dictionary<string, int> leaves)
+    internal readonly ref struct LeafReader(ReadOnlySpan<byte> asd, Dictionary<string, int> leaves)
     {
         private readonly ReadOnlySpan<byte> _asd = asd;
         private readonly Dictionary<string, int> _leaves = leaves;
