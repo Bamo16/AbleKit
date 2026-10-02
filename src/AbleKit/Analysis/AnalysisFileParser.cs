@@ -1,14 +1,13 @@
 using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace AbleKit.Analysis;
 
 /// <summary>
-/// Reads the head and warp section of an analysis file, which is undocumented and described by a
-/// type schema the file carries.
+/// Reads an analysis file into an <see cref="AnalysisFile"/>. The file is undocumented but describes
+/// itself with a type schema, which the reader walks rather than trusting fixed offsets.
 /// </summary>
 internal static class AnalysisFileParser
 {
@@ -28,24 +27,8 @@ internal static class AnalysisFileParser
 
     private const int MaxTypeCount = 256;
 
-    private const string IsWarpedPath = "IsWarped.Value";
-    private const string ModePath = "WarpMode.Value";
-    private const string NumeratorPath = "TimeSignature.Numerator.Value";
-    private const string DenominatorPath = "TimeSignature.Denominator.Value";
-    private const string LoopStartPath = "LoopStart.Value";
-    private const string LoopEndPath = "LoopEnd.Value";
-    private const string SampleOffsetPath = "SampleOffset.Value";
-    private const string OutMarkerPath = "OutMarker.Value";
-    private const string LoopOnPath = "LoopOn.Value";
-    private const string MarkersPath = "WarpMarkers";
-    private const string OverviewFinestPath = "OverView.OverViewLevels[0].InterleavedBinData";
     private const string SampleDataClass = "SampleData";
 
-    internal const string OverviewBinPath = "OverView.SamplesPerBinLog2";
-    internal const string OverviewChannelsPath = "OverView.ChannelCount";
-    internal const string OverviewLevelsPath = "OverView.OverViewLevels";
-    internal const string TransientPositionsPath = "OnSets.Positions";
-    internal const string TransientEnergiesPath = "OnSets.TransitionEnergies";
     private const string RemoteableArrayClass = "RemoteableArray";
 
     private static readonly byte[] ChunkMagic = [0xAB, 0x1E, 0x56, 0x78];
@@ -54,47 +37,108 @@ internal static class AnalysisFileParser
 
     internal static bool TryParse(
         ReadOnlySpan<byte> asd,
-        [NotNullWhen(true)] out AnalysisFile? warp
+        [NotNullWhen(true)] out AnalysisFile? analysis
     )
     {
-        warp = null;
+        analysis = null;
 
         if (!TryScan(asd, out var scan))
             return false;
 
-        var layout = scan.Layout;
-        var leaves = new LeafReader(asd, layout.Values);
+        var fields = new Fields(asd.ToArray(), scan.Layout);
 
-        if (
-            ReadMarkers(asd, layout) is not { } markers
-            || !leaves.TryBool(IsWarpedPath, out var isWarped)
-            || !leaves.TryInt32(ModePath, out var mode)
-            || !leaves.TryFloat(NumeratorPath, out var numerator)
-            || !leaves.TryFloat(DenominatorPath, out var denominator)
-            || !leaves.TryDouble(LoopStartPath, out var loopStart)
-            || !leaves.TryDouble(LoopEndPath, out var loopEnd)
-            || !leaves.TryDouble(SampleOffsetPath, out var sampleOffset)
-            || !leaves.TryDouble(OutMarkerPath, out var outMarker)
-            || !leaves.TryBool(LoopOnPath, out var loopOn)
-        )
+        var clip = new Clip
+        {
+            LoopStart = fields.Double("LoopStart.Value"),
+            LoopEnd = fields.Double("LoopEnd.Value"),
+            SampleOffset = fields.Double("SampleOffset.Value"),
+            HiddenLoopStart = fields.Double("HiddenLoopStart.Value"),
+            HiddenLoopEnd = fields.Double("HiddenLoopEnd.Value"),
+            OutMarker = fields.Double("OutMarker.Value"),
+            LoopOn = fields.Bool("LoopOn.Value"),
+            Sync = fields.Bool("Sync.Value"),
+            HiQ = fields.Bool("HiQ.Value"),
+            Fade = fields.Bool("Fade.Value"),
+            SampleVolume = fields.Float("SampleVolume.Value"),
+            VelocityAmount = fields.Float("VelocityAmount.Value"),
+            PitchCoarse = fields.Float("PitchCoarse.Value"),
+            PitchFine = fields.Float("PitchFine.Value"),
+            ColorIndex = fields.Int32("ColorIndex.Value"),
+            LaunchMode = fields.Int32("LaunchMode.Value"),
+            LaunchQuantisation = fields.Int32("LaunchQuantisation.Value"),
+        };
+
+        var warp = new Warp
+        {
+            IsWarped = fields.Bool("IsWarped.Value"),
+            Mode = (WarpMode)fields.Int32("WarpMode.Value"),
+            Markers = fields.List(
+                "WarpMarkers",
+                path => new WarpMarker(
+                    fields.Double($"{path}.SecTime"),
+                    fields.Double($"{path}.BeatTime")
+                )
+            ),
+            MarkersGenerated = fields.Bool("MarkersGenerated.Value"),
+            TimeSignature = new TimeSignature(
+                (int)fields.Float("TimeSignature.Numerator.Value"),
+                (int)fields.Float("TimeSignature.Denominator.Value"),
+                fields.Double("TimeSignature.Time.Value")
+            ),
+            TransientResolution = fields.Int32("TransientResolution.Value"),
+            TransientLoopMode = fields.Int32("TransientLoopMode.Value"),
+            TransientEnvelope = fields.Float("TransientEnvelope.Value"),
+            GranularityTones = fields.Float("GranularityTones.Value"),
+            GranularityTexture = fields.Float("GranularityTexture.Value"),
+            FluctuationTexture = fields.Float("FluctuationTexture.Value"),
+            ComplexProFormants = fields.Float("ComplexProFormants.Value"),
+            ComplexProEnvelope = fields.Float("ComplexProEnvelope.Value"),
+        };
+
+        var positions = fields.Array<int>("OnSets.Positions");
+        var energies = fields.Array<float>("OnSets.TransitionEnergies");
+        var channels = fields.Int32("OverView.ChannelCount");
+
+        var audio = new AudioAnalysis
+        {
+            Overview = new SampleOverview
+            {
+                Levels = fields.List(
+                    "OverView.OverViewLevels",
+                    path => (ReadOnlyMemory<Half>)fields.Array<Half>($"{path}.InterleavedBinData")
+                ),
+                SamplesPerBinLog2 = fields.Int32("OverView.SamplesPerBinLog2"),
+                ChannelCount = channels,
+            },
+            HeadTable = scan.HeadTable,
+            Transients =
+            [
+                .. positions
+                    .Zip(energies)
+                    .Select(transient => new Transient(transient.First, transient.Second)),
+            ],
+            TransientsVersion = fields.Int32("OnSets.Version"),
+            HasUserOnsets = fields.Bool("UserOnsets.HasUserOnsets.Value"),
+            UserOnsets = fields.UserOnsets("UserOnsets.UserOnsets"),
+            TempoEstimate = fields.Bool("AufTaktData.IsSet")
+                ? new TempoEstimate(
+                    fields.Array<byte>("AufTaktData.PreprocessedDataChunk"),
+                    fields.Double("AufTaktData.UnbiasedTempoEstimate")
+                )
+                : null,
+            OriginalFileSize = fields.Int32("OriginalFileSize.Value"),
+        };
+
+        if (fields.Failed || positions.Length != energies.Length || channels < 1)
             return false;
 
-        warp = new AnalysisFile(
-            isWarped,
-            (WarpMode)mode,
-            (int)numerator,
-            (int)denominator,
-            markers,
-            (scan.Saved, loopOn) switch
-            {
-                (false, _) => null,
-                // With Loop on, the loop fields hold the loop, not the clip's start and end.
-                (true, true) => new DefaultClip(loopStart + sampleOffset, outMarker),
-                (true, false) => new DefaultClip(loopStart, loopEnd),
-            },
-            ReadOverview(asd, layout),
-            ReadTransients(asd, layout)
-        );
+        analysis = new AnalysisFile
+        {
+            Clip = clip,
+            Warp = warp,
+            Audio = audio,
+            IsDefaultClipSaved = scan.Saved,
+        };
 
         return true;
     }
@@ -106,11 +150,11 @@ internal static class AnalysisFileParser
 
         if (
             !TryReadSchema(asd, out var types, out var sampleData, out var instance)
-            || !TryReadHead(asd, sampleData, out var saved, out var frames)
+            || !TryReadHead(asd, sampleData, out var saved, out var table)
         )
             return false;
 
-        scan = new Scan(saved, frames, Walk(asd, types, instance));
+        scan = new Scan(saved, table, Walk(asd, types, instance));
 
         return true;
     }
@@ -168,19 +212,18 @@ internal static class AnalysisFileParser
     }
 
     /// <summary>
-    /// The byte ending the head, 1 once <em>Save Default Clip</em> has been pressed, and the last
-    /// entry of the head's table, which is the audio's length in frames. Found by walking the table,
-    /// and only trusted if that walk lands on the chunk holding the clip.
+    /// The byte ending the head, 1 once <em>Save Default Clip</em> has been pressed, and the head's
+    /// table. Found by walking the table, and only trusted if that walk lands on the chunk holding the clip.
     /// </summary>
     private static bool TryReadHead(
         ReadOnlySpan<byte> asd,
         int sampleData,
         out bool saved,
-        out int? frames
+        out int[] table
     )
     {
         saved = false;
-        frames = null;
+        table = [];
 
         var p = HeadCountOffset;
 
@@ -213,8 +256,9 @@ internal static class AnalysisFileParser
 
         saved = asd[(int)flag] is 1;
 
-        if (count > 0)
-            frames = BinaryPrimitives.ReadInt32LittleEndian(asd[((int)trailer - sizeof(int))..]);
+        table = MemoryMarshal
+            .Cast<byte, int>(asd.Slice(HeadTableOffset, count * sizeof(int)))
+            .ToArray();
 
         return true;
     }
@@ -342,6 +386,9 @@ internal static class AnalysisFileParser
         Layout layout
     )
     {
+        var next = p;
+        List<int> ids = [];
+
         if (!TryReadInt32(asd, ref p, out _))
             return false;
 
@@ -353,9 +400,12 @@ internal static class AnalysisFileParser
             if (element.Length is 0)
             {
                 layout.Counts[path] = i;
+                layout.Ids[path] = new ListIds(next, [.. ids]);
 
                 return true;
             }
+
+            ids.Add(p);
 
             if (
                 !types.TryGetValue(element, out var fields)
@@ -432,95 +482,6 @@ internal static class AnalysisFileParser
 
         return true;
     }
-
-    private static List<WarpMarker>? ReadMarkers(ReadOnlySpan<byte> asd, Layout layout)
-    {
-        if (!layout.Counts.TryGetValue(MarkersPath, out var count))
-            return null;
-
-        var leaves = new LeafReader(asd, layout.Values);
-        List<WarpMarker> markers = [];
-
-        for (var i = 0; i < count; i++)
-        {
-            if (
-                !leaves.TryDouble($"{MarkersPath}[{i}].SecTime", out var seconds)
-                || !leaves.TryDouble($"{MarkersPath}[{i}].BeatTime", out var beat)
-            )
-                return null;
-
-            markers.Add(new WarpMarker(seconds, beat));
-        }
-
-        return markers;
-    }
-
-    /// <summary>The finest overview level's peaks, or null when the walk did not reach it.</summary>
-    private static SampleOverview? ReadOverview(ReadOnlySpan<byte> asd, Layout layout)
-    {
-        var leaves = new LeafReader(asd, layout.Values);
-
-        if (
-            !leaves.TryInt32(OverviewBinPath, out var log2)
-            || !leaves.TryInt32(OverviewChannelsPath, out var channels)
-            || !layout.Arrays.TryGetValue(OverviewFinestPath, out var finest)
-            || log2 is < 0 or > 30
-            || channels < 1
-        )
-            return null;
-
-        // Each bin holds a minimum and a maximum per channel, as half-precision floats. Without the
-        // sign bit, a half's bits order the same way as its magnitude.
-        var perBin = 2 * channels;
-        var peaks = new float[finest.Count / perBin];
-        var values = MemoryMarshal.Cast<byte, ushort>(
-            asd.Slice(finest.Offset, peaks.Length * perBin * sizeof(ushort))
-        );
-
-        for (var bin = 0; bin < peaks.Length; bin++)
-        {
-            ushort loudest = 0;
-
-            foreach (var bits in values.Slice(bin * perBin, perBin))
-                loudest = Math.Max(loudest, (ushort)(bits & 0x7FFF));
-
-            peaks[bin] = (float)BitConverter.UInt16BitsToHalf(loudest);
-        }
-
-        return new SampleOverview(1 << log2, peaks);
-    }
-
-    /// <summary>The transients Live detected, or null when the walk did not reach them.</summary>
-    private static List<Transient>? ReadTransients(ReadOnlySpan<byte> asd, Layout layout)
-    {
-        if (
-            !layout.Arrays.TryGetValue(TransientPositionsPath, out var positions)
-            || !layout.Arrays.TryGetValue(TransientEnergiesPath, out var energies)
-            || positions.Count != energies.Count
-        )
-            return null;
-
-        List<Transient> transients = new(positions.Count);
-
-        for (var i = 0; i < positions.Count; i++)
-        {
-            transients.Add(
-                new Transient(
-                    BinaryPrimitives.ReadInt32LittleEndian(
-                        asd[(positions.Offset + i * sizeof(int))..]
-                    ),
-                    BinaryPrimitives.ReadSingleLittleEndian(
-                        asd[(energies.Offset + i * sizeof(float))..]
-                    )
-                )
-            );
-        }
-
-        return transients;
-    }
-
-    internal static string LevelPath(int level) =>
-        $"{OverviewLevelsPath}[{level}].InterleavedBinData";
 
     private static int? ElementSizeOf(byte code) =>
         code switch
@@ -603,8 +564,12 @@ internal static class AnalysisFileParser
 
     private readonly record struct SchemaField(string Name, byte Code, string? Class);
 
-    /// <summary>What a scan found: the saved byte, the audio's length the head records, and the layout.</summary>
-    internal sealed record Scan(bool Saved, int? Frames, Layout Layout);
+    /// <summary>What a scan found: the saved byte, the head's table, and the layout.</summary>
+    internal sealed record Scan(bool Saved, int[] HeadTable, Layout Layout)
+    {
+        /// <summary>The audio's length in frames, the table's last entry; null for an empty table.</summary>
+        public int? Frames => HeadTable is [.., var last] ? last : null;
+    }
 
     /// <summary>Where each value, array and list of the instance is, keyed by dotted path.</summary>
     internal sealed class Layout
@@ -612,7 +577,11 @@ internal static class AnalysisFileParser
         public Dictionary<string, int> Values { get; } = [];
         public Dictionary<string, ArrayField> Arrays { get; } = [];
         public Dictionary<string, int> Counts { get; } = [];
+        public Dictionary<string, ListIds> Ids { get; } = [];
     }
+
+    /// <summary>Where a list keeps its next id and each element's id.</summary>
+    internal readonly record struct ListIds(int Next, int[] Elements);
 
     /// <summary>
     /// An array from its count, at <see cref="Start"/>, to one past its last byte, at <see cref="End"/>;
@@ -620,38 +589,87 @@ internal static class AnalysisFileParser
     /// </summary>
     internal readonly record struct ArrayField(int Start, int Offset, int Count, int End);
 
-    /// <summary>Reads the fixed-width values the walk found, by path.</summary>
-    internal readonly ref struct LeafReader(ReadOnlySpan<byte> asd, Dictionary<string, int> leaves)
+    /// <summary>
+    /// Reads values by path, noting rather than stopping at one the walk did not find, so a whole
+    /// model can be read before it is checked.
+    /// </summary>
+    private sealed class Fields(byte[] asd, Layout layout)
     {
-        private readonly ReadOnlySpan<byte> _asd = asd;
-        private readonly Dictionary<string, int> _leaves = leaves;
+        /// <summary>A packed <c>OnsetEvent</c>: <c>Time</c> and <c>Energy</c> as doubles, then <c>IsVolatile</c>.</summary>
+        private const int OnsetEventSize = sizeof(double) + sizeof(double) + sizeof(bool);
 
-        public bool TryBool(string path, out bool value) =>
-            TryRead(path, bytes => bytes[0] is not 0, out value);
+        public bool Failed { get; private set; }
 
-        public bool TryInt32(string path, out int value) =>
-            TryRead(path, BinaryPrimitives.ReadInt32LittleEndian, out value);
+        public bool Bool(string path) => Value(path, sizeof(bool), bytes => bytes[0] is not 0);
 
-        public bool TryFloat(string path, out float value) =>
-            TryRead(path, BinaryPrimitives.ReadSingleLittleEndian, out value);
+        public int Int32(string path) =>
+            Value(path, sizeof(int), BinaryPrimitives.ReadInt32LittleEndian);
 
-        public bool TryDouble(string path, out double value) =>
-            TryRead(path, BinaryPrimitives.ReadDoubleLittleEndian, out value);
+        public float Float(string path) =>
+            Value(path, sizeof(float), BinaryPrimitives.ReadSingleLittleEndian);
 
-        private bool TryRead<T>(string path, Func<ReadOnlySpan<byte>, T> read, out T value)
+        public double Double(string path) =>
+            Value(path, sizeof(double), BinaryPrimitives.ReadDoubleLittleEndian);
+
+        public T[] Array<T>(string path)
+            where T : unmanaged =>
+            Bytes(path) is { } bytes ? MemoryMarshal.Cast<byte, T>(bytes).ToArray() : [];
+
+        public List<T> List<T>(string path, Func<string, T> element)
         {
-            value = default!;
+            if (!layout.Counts.TryGetValue(path, out var count))
+            {
+                Failed = true;
 
-            if (
-                !_leaves.TryGetValue(path, out var offset)
-                || offset < 0
-                || offset + Unsafe.SizeOf<T>() > _asd.Length
-            )
-                return false;
+                return [];
+            }
 
-            value = read(_asd[offset..]);
+            return [.. Enumerable.Range(0, count).Select(i => element($"{path}[{i}]"))];
+        }
 
-            return true;
+        public List<UserOnset> UserOnsets(string path)
+        {
+            if (Bytes(path) is not { } bytes || bytes.Length % OnsetEventSize is not 0)
+            {
+                Failed = true;
+
+                return [];
+            }
+
+            List<UserOnset> onsets = [];
+
+            for (var p = 0; p < bytes.Length; p += OnsetEventSize)
+            {
+                onsets.Add(
+                    new UserOnset(
+                        BinaryPrimitives.ReadDoubleLittleEndian(bytes.AsSpan(p)),
+                        BinaryPrimitives.ReadDoubleLittleEndian(bytes.AsSpan(p + sizeof(double))),
+                        bytes[p + 2 * sizeof(double)] is not 0
+                    )
+                );
+            }
+
+            return onsets;
+        }
+
+        private byte[]? Bytes(string path)
+        {
+            if (layout.Arrays.TryGetValue(path, out var array))
+                return asd[array.Offset..array.End];
+
+            Failed = true;
+
+            return null;
+        }
+
+        private T Value<T>(string path, int size, Func<ReadOnlySpan<byte>, T> read)
+        {
+            if (layout.Values.TryGetValue(path, out var offset) && offset + size <= asd.Length)
+                return read(asd.AsSpan(offset, size));
+
+            Failed = true;
+
+            return default!;
         }
     }
 }

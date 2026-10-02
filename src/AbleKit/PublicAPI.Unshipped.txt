@@ -1,29 +1,21 @@
 #nullable enable
 AbleKit.Analysis.AnalysisFile
 AbleKit.Analysis.AnalysisFile.<Clone>$() -> AbleKit.Analysis.AnalysisFile!
-AbleKit.Analysis.AnalysisFile.AnalysisFile(bool IsWarped, AbleKit.Analysis.WarpMode Mode, int TimeSignatureNumerator, int TimeSignatureDenominator, System.Collections.Generic.IReadOnlyList<AbleKit.Analysis.WarpMarker>! Markers, AbleKit.Analysis.DefaultClip? DefaultClip = null, AbleKit.Analysis.SampleOverview? Overview = null, System.Collections.Generic.IReadOnlyList<AbleKit.Analysis.Transient>? Transients = null) -> void
-AbleKit.Analysis.AnalysisFile.Deconstruct(out bool IsWarped, out AbleKit.Analysis.WarpMode Mode, out int TimeSignatureNumerator, out int TimeSignatureDenominator, out System.Collections.Generic.IReadOnlyList<AbleKit.Analysis.WarpMarker>! Markers, out AbleKit.Analysis.DefaultClip? DefaultClip, out AbleKit.Analysis.SampleOverview? Overview, out System.Collections.Generic.IReadOnlyList<AbleKit.Analysis.Transient>? Transients) -> void
+AbleKit.Analysis.AnalysisFile.AnalysisFile() -> void
+AbleKit.Analysis.AnalysisFile.Audio.get -> AbleKit.Analysis.AudioAnalysis!
+AbleKit.Analysis.AnalysisFile.Audio.init -> void
+AbleKit.Analysis.AnalysisFile.Clip.get -> AbleKit.Analysis.Clip!
+AbleKit.Analysis.AnalysisFile.Clip.init -> void
 AbleKit.Analysis.AnalysisFile.DefaultClip.get -> AbleKit.Analysis.DefaultClip?
-AbleKit.Analysis.AnalysisFile.DefaultClip.init -> void
 AbleKit.Analysis.AnalysisFile.Equals(AbleKit.Analysis.AnalysisFile? other) -> bool
-AbleKit.Analysis.AnalysisFile.IsWarped.get -> bool
-AbleKit.Analysis.AnalysisFile.IsWarped.init -> void
-AbleKit.Analysis.AnalysisFile.Markers.get -> System.Collections.Generic.IReadOnlyList<AbleKit.Analysis.WarpMarker>!
-AbleKit.Analysis.AnalysisFile.Markers.init -> void
-AbleKit.Analysis.AnalysisFile.Mode.get -> AbleKit.Analysis.WarpMode
-AbleKit.Analysis.AnalysisFile.Mode.init -> void
-AbleKit.Analysis.AnalysisFile.Overview.get -> AbleKit.Analysis.SampleOverview?
-AbleKit.Analysis.AnalysisFile.Overview.init -> void
-AbleKit.Analysis.AnalysisFile.SecondsAt(double beat) -> double?
-AbleKit.Analysis.AnalysisFile.TempoAt(double seconds) -> double?
-AbleKit.Analysis.AnalysisFile.TimeSignatureDenominator.get -> int
-AbleKit.Analysis.AnalysisFile.TimeSignatureDenominator.init -> void
-AbleKit.Analysis.AnalysisFile.TimeSignatureNumerator.get -> int
-AbleKit.Analysis.AnalysisFile.TimeSignatureNumerator.init -> void
-AbleKit.Analysis.AnalysisFile.Transients.get -> System.Collections.Generic.IReadOnlyList<AbleKit.Analysis.Transient>?
-AbleKit.Analysis.AnalysisFile.Transients.init -> void
+AbleKit.Analysis.AnalysisFile.IsDefaultClipSaved.get -> bool
+AbleKit.Analysis.AnalysisFile.IsDefaultClipSaved.init -> void
+AbleKit.Analysis.AnalysisFile.ToBytes() -> byte[]!
+AbleKit.Analysis.AnalysisFile.Warp.get -> AbleKit.Analysis.Warp!
+AbleKit.Analysis.AnalysisFile.Warp.init -> void
 AbleKit.Analysis.AnalysisFileWriter
 AbleKit.Analysis.AnalysisFileWriter.AnalysisFileWriter() -> void
+AbleKit.Analysis.AnalysisFileWriter.Write(string! path, AbleKit.Analysis.AnalysisFile! analysis) -> AbleKit.Analysis.AnalysisWriteOutcome!
 AbleKit.Analysis.AnalysisFileWriter.WriteFromSibling(string! siblingPath, string! audioPath, System.ReadOnlySpan<float> samples, int channelCount, System.Collections.Generic.IReadOnlyList<AbleKit.Analysis.Transient>! transients) -> AbleKit.Analysis.AnalysisWriteOutcome!
 AbleKit.Analysis.AnalysisWriteOutcome
 AbleKit.Analysis.AnalysisWriteOutcome.AnalysisWriteOutcome(AbleKit.Analysis.AnalysisWriteOutcome! original) -> void
@@ -45,6 +37,64 @@ AbleKit.Analysis.AnalysisWriteOutcome.Written.Equals(AbleKit.Analysis.AnalysisWr
 AbleKit.Analysis.AnalysisWriteOutcome.Written.Path.get -> string!
 AbleKit.Analysis.AnalysisWriteOutcome.Written.Path.init -> void
 AbleKit.Analysis.AnalysisWriteOutcome.Written.Written(string! Path) -> void
+AbleKit.Analysis.AudioAnalysis
+AbleKit.Analysis.AudioAnalysis.<Clone>$() -> AbleKit.Analysis.AudioAnalysis!
+AbleKit.Analysis.AudioAnalysis.AudioAnalysis() -> void
+AbleKit.Analysis.AudioAnalysis.Equals(AbleKit.Analysis.AudioAnalysis? other) -> bool
+AbleKit.Analysis.AudioAnalysis.HasUserOnsets.get -> bool
+AbleKit.Analysis.AudioAnalysis.HasUserOnsets.init -> void
+AbleKit.Analysis.AudioAnalysis.HeadTable.get -> System.Collections.Generic.IReadOnlyList<int>!
+AbleKit.Analysis.AudioAnalysis.HeadTable.init -> void
+AbleKit.Analysis.AudioAnalysis.OriginalFileSize.get -> int
+AbleKit.Analysis.AudioAnalysis.OriginalFileSize.init -> void
+AbleKit.Analysis.AudioAnalysis.Overview.get -> AbleKit.Analysis.SampleOverview!
+AbleKit.Analysis.AudioAnalysis.Overview.init -> void
+AbleKit.Analysis.AudioAnalysis.TempoEstimate.get -> AbleKit.Analysis.TempoEstimate?
+AbleKit.Analysis.AudioAnalysis.TempoEstimate.init -> void
+AbleKit.Analysis.AudioAnalysis.Transients.get -> System.Collections.Generic.IReadOnlyList<AbleKit.Analysis.Transient>!
+AbleKit.Analysis.AudioAnalysis.Transients.init -> void
+AbleKit.Analysis.AudioAnalysis.TransientsVersion.get -> int
+AbleKit.Analysis.AudioAnalysis.TransientsVersion.init -> void
+AbleKit.Analysis.AudioAnalysis.UserOnsets.get -> System.Collections.Generic.IReadOnlyList<AbleKit.Analysis.UserOnset>!
+AbleKit.Analysis.AudioAnalysis.UserOnsets.init -> void
+AbleKit.Analysis.Clip
+AbleKit.Analysis.Clip.<Clone>$() -> AbleKit.Analysis.Clip!
+AbleKit.Analysis.Clip.Clip() -> void
+AbleKit.Analysis.Clip.ColorIndex.get -> int
+AbleKit.Analysis.Clip.ColorIndex.init -> void
+AbleKit.Analysis.Clip.Equals(AbleKit.Analysis.Clip? other) -> bool
+AbleKit.Analysis.Clip.Fade.get -> bool
+AbleKit.Analysis.Clip.Fade.init -> void
+AbleKit.Analysis.Clip.HiQ.get -> bool
+AbleKit.Analysis.Clip.HiQ.init -> void
+AbleKit.Analysis.Clip.HiddenLoopEnd.get -> double
+AbleKit.Analysis.Clip.HiddenLoopEnd.init -> void
+AbleKit.Analysis.Clip.HiddenLoopStart.get -> double
+AbleKit.Analysis.Clip.HiddenLoopStart.init -> void
+AbleKit.Analysis.Clip.LaunchMode.get -> int
+AbleKit.Analysis.Clip.LaunchMode.init -> void
+AbleKit.Analysis.Clip.LaunchQuantisation.get -> int
+AbleKit.Analysis.Clip.LaunchQuantisation.init -> void
+AbleKit.Analysis.Clip.LoopEnd.get -> double
+AbleKit.Analysis.Clip.LoopEnd.init -> void
+AbleKit.Analysis.Clip.LoopOn.get -> bool
+AbleKit.Analysis.Clip.LoopOn.init -> void
+AbleKit.Analysis.Clip.LoopStart.get -> double
+AbleKit.Analysis.Clip.LoopStart.init -> void
+AbleKit.Analysis.Clip.OutMarker.get -> double
+AbleKit.Analysis.Clip.OutMarker.init -> void
+AbleKit.Analysis.Clip.PitchCoarse.get -> float
+AbleKit.Analysis.Clip.PitchCoarse.init -> void
+AbleKit.Analysis.Clip.PitchFine.get -> float
+AbleKit.Analysis.Clip.PitchFine.init -> void
+AbleKit.Analysis.Clip.SampleOffset.get -> double
+AbleKit.Analysis.Clip.SampleOffset.init -> void
+AbleKit.Analysis.Clip.SampleVolume.get -> float
+AbleKit.Analysis.Clip.SampleVolume.init -> void
+AbleKit.Analysis.Clip.Sync.get -> bool
+AbleKit.Analysis.Clip.Sync.init -> void
+AbleKit.Analysis.Clip.VelocityAmount.get -> float
+AbleKit.Analysis.Clip.VelocityAmount.init -> void
 AbleKit.Analysis.DefaultClip
 AbleKit.Analysis.DefaultClip.<Clone>$() -> AbleKit.Analysis.DefaultClip!
 AbleKit.Analysis.DefaultClip.Deconstruct(out double Start, out double End) -> void
@@ -56,14 +106,37 @@ AbleKit.Analysis.DefaultClip.Start.get -> double
 AbleKit.Analysis.DefaultClip.Start.init -> void
 AbleKit.Analysis.SampleOverview
 AbleKit.Analysis.SampleOverview.<Clone>$() -> AbleKit.Analysis.SampleOverview!
-AbleKit.Analysis.SampleOverview.Deconstruct(out int SamplesPerBin, out System.Collections.Generic.IReadOnlyList<float>! Peaks) -> void
+AbleKit.Analysis.SampleOverview.BinCount.get -> int
+AbleKit.Analysis.SampleOverview.ChannelCount.get -> int
+AbleKit.Analysis.SampleOverview.ChannelCount.init -> void
 AbleKit.Analysis.SampleOverview.Equals(AbleKit.Analysis.SampleOverview? other) -> bool
+AbleKit.Analysis.SampleOverview.Levels.get -> System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<System.Half>>!
+AbleKit.Analysis.SampleOverview.Levels.init -> void
 AbleKit.Analysis.SampleOverview.PeakBetween(long fromSample, long toSample) -> float
-AbleKit.Analysis.SampleOverview.Peaks.get -> System.Collections.Generic.IReadOnlyList<float>!
-AbleKit.Analysis.SampleOverview.Peaks.init -> void
-AbleKit.Analysis.SampleOverview.SampleOverview(int SamplesPerBin, System.Collections.Generic.IReadOnlyList<float>! Peaks) -> void
+AbleKit.Analysis.SampleOverview.SampleOverview() -> void
 AbleKit.Analysis.SampleOverview.SamplesPerBin.get -> int
-AbleKit.Analysis.SampleOverview.SamplesPerBin.init -> void
+AbleKit.Analysis.SampleOverview.SamplesPerBinLog2.get -> int
+AbleKit.Analysis.SampleOverview.SamplesPerBinLog2.init -> void
+AbleKit.Analysis.TempoEstimate
+AbleKit.Analysis.TempoEstimate.<Clone>$() -> AbleKit.Analysis.TempoEstimate!
+AbleKit.Analysis.TempoEstimate.Bpm.get -> double
+AbleKit.Analysis.TempoEstimate.Bpm.init -> void
+AbleKit.Analysis.TempoEstimate.Deconstruct(out System.ReadOnlyMemory<byte> PreprocessedData, out double Bpm) -> void
+AbleKit.Analysis.TempoEstimate.Equals(AbleKit.Analysis.TempoEstimate? other) -> bool
+AbleKit.Analysis.TempoEstimate.PreprocessedData.get -> System.ReadOnlyMemory<byte>
+AbleKit.Analysis.TempoEstimate.PreprocessedData.init -> void
+AbleKit.Analysis.TempoEstimate.TempoEstimate(System.ReadOnlyMemory<byte> PreprocessedData, double Bpm) -> void
+AbleKit.Analysis.TimeSignature
+AbleKit.Analysis.TimeSignature.Deconstruct(out int Numerator, out int Denominator, out double Time) -> void
+AbleKit.Analysis.TimeSignature.Denominator.get -> int
+AbleKit.Analysis.TimeSignature.Denominator.init -> void
+AbleKit.Analysis.TimeSignature.Equals(AbleKit.Analysis.TimeSignature other) -> bool
+AbleKit.Analysis.TimeSignature.Numerator.get -> int
+AbleKit.Analysis.TimeSignature.Numerator.init -> void
+AbleKit.Analysis.TimeSignature.Time.get -> double
+AbleKit.Analysis.TimeSignature.Time.init -> void
+AbleKit.Analysis.TimeSignature.TimeSignature() -> void
+AbleKit.Analysis.TimeSignature.TimeSignature(int Numerator, int Denominator, double Time = 0) -> void
 AbleKit.Analysis.Transient
 AbleKit.Analysis.Transient.Deconstruct(out int Position, out float Energy) -> void
 AbleKit.Analysis.Transient.Energy.get -> float
@@ -73,6 +146,49 @@ AbleKit.Analysis.Transient.Position.get -> int
 AbleKit.Analysis.Transient.Position.init -> void
 AbleKit.Analysis.Transient.Transient() -> void
 AbleKit.Analysis.Transient.Transient(int Position, float Energy) -> void
+AbleKit.Analysis.UserOnset
+AbleKit.Analysis.UserOnset.Deconstruct(out double Time, out double Energy, out bool IsVolatile) -> void
+AbleKit.Analysis.UserOnset.Energy.get -> double
+AbleKit.Analysis.UserOnset.Energy.init -> void
+AbleKit.Analysis.UserOnset.Equals(AbleKit.Analysis.UserOnset other) -> bool
+AbleKit.Analysis.UserOnset.IsVolatile.get -> bool
+AbleKit.Analysis.UserOnset.IsVolatile.init -> void
+AbleKit.Analysis.UserOnset.Time.get -> double
+AbleKit.Analysis.UserOnset.Time.init -> void
+AbleKit.Analysis.UserOnset.UserOnset() -> void
+AbleKit.Analysis.UserOnset.UserOnset(double Time, double Energy, bool IsVolatile) -> void
+AbleKit.Analysis.Warp
+AbleKit.Analysis.Warp.<Clone>$() -> AbleKit.Analysis.Warp!
+AbleKit.Analysis.Warp.ComplexProEnvelope.get -> float
+AbleKit.Analysis.Warp.ComplexProEnvelope.init -> void
+AbleKit.Analysis.Warp.ComplexProFormants.get -> float
+AbleKit.Analysis.Warp.ComplexProFormants.init -> void
+AbleKit.Analysis.Warp.Equals(AbleKit.Analysis.Warp? other) -> bool
+AbleKit.Analysis.Warp.FluctuationTexture.get -> float
+AbleKit.Analysis.Warp.FluctuationTexture.init -> void
+AbleKit.Analysis.Warp.GranularityTexture.get -> float
+AbleKit.Analysis.Warp.GranularityTexture.init -> void
+AbleKit.Analysis.Warp.GranularityTones.get -> float
+AbleKit.Analysis.Warp.GranularityTones.init -> void
+AbleKit.Analysis.Warp.IsWarped.get -> bool
+AbleKit.Analysis.Warp.IsWarped.init -> void
+AbleKit.Analysis.Warp.Markers.get -> System.Collections.Generic.IReadOnlyList<AbleKit.Analysis.WarpMarker>!
+AbleKit.Analysis.Warp.Markers.init -> void
+AbleKit.Analysis.Warp.MarkersGenerated.get -> bool
+AbleKit.Analysis.Warp.MarkersGenerated.init -> void
+AbleKit.Analysis.Warp.Mode.get -> AbleKit.Analysis.WarpMode
+AbleKit.Analysis.Warp.Mode.init -> void
+AbleKit.Analysis.Warp.SecondsAt(double beat) -> double?
+AbleKit.Analysis.Warp.TempoAt(double seconds) -> double?
+AbleKit.Analysis.Warp.TimeSignature.get -> AbleKit.Analysis.TimeSignature
+AbleKit.Analysis.Warp.TimeSignature.init -> void
+AbleKit.Analysis.Warp.TransientEnvelope.get -> float
+AbleKit.Analysis.Warp.TransientEnvelope.init -> void
+AbleKit.Analysis.Warp.TransientLoopMode.get -> int
+AbleKit.Analysis.Warp.TransientLoopMode.init -> void
+AbleKit.Analysis.Warp.TransientResolution.get -> int
+AbleKit.Analysis.Warp.TransientResolution.init -> void
+AbleKit.Analysis.Warp.Warp() -> void
 AbleKit.Analysis.WarpMarker
 AbleKit.Analysis.WarpMarker.Beat.get -> double
 AbleKit.Analysis.WarpMarker.Beat.init -> void
@@ -204,13 +320,27 @@ override AbleKit.Analysis.AnalysisWriteOutcome.Written.<Clone>$() -> AbleKit.Ana
 override AbleKit.Analysis.AnalysisWriteOutcome.Written.Equals(object? obj) -> bool
 override AbleKit.Analysis.AnalysisWriteOutcome.Written.GetHashCode() -> int
 override AbleKit.Analysis.AnalysisWriteOutcome.Written.ToString() -> string!
+override AbleKit.Analysis.AudioAnalysis.Equals(object? obj) -> bool
+override AbleKit.Analysis.AudioAnalysis.GetHashCode() -> int
+override AbleKit.Analysis.AudioAnalysis.ToString() -> string!
+override AbleKit.Analysis.Clip.Equals(object? obj) -> bool
+override AbleKit.Analysis.Clip.GetHashCode() -> int
+override AbleKit.Analysis.Clip.ToString() -> string!
 override AbleKit.Analysis.DefaultClip.Equals(object? obj) -> bool
 override AbleKit.Analysis.DefaultClip.GetHashCode() -> int
 override AbleKit.Analysis.DefaultClip.ToString() -> string!
 override AbleKit.Analysis.SampleOverview.Equals(object? obj) -> bool
 override AbleKit.Analysis.SampleOverview.GetHashCode() -> int
 override AbleKit.Analysis.SampleOverview.ToString() -> string!
+override AbleKit.Analysis.TempoEstimate.Equals(object? obj) -> bool
+override AbleKit.Analysis.TempoEstimate.GetHashCode() -> int
+override AbleKit.Analysis.TempoEstimate.ToString() -> string!
+override AbleKit.Analysis.TimeSignature.GetHashCode() -> int
 override AbleKit.Analysis.Transient.GetHashCode() -> int
+override AbleKit.Analysis.UserOnset.GetHashCode() -> int
+override AbleKit.Analysis.Warp.Equals(object? obj) -> bool
+override AbleKit.Analysis.Warp.GetHashCode() -> int
+override AbleKit.Analysis.Warp.ToString() -> string!
 override AbleKit.Analysis.WarpMarker.GetHashCode() -> int
 override AbleKit.Sets.SampleMove.Equals(object? obj) -> bool
 override AbleKit.Sets.SampleMove.GetHashCode() -> int
@@ -263,12 +393,25 @@ static AbleKit.Analysis.AnalysisWriteOutcome.Written.operator !=(AbleKit.Analysi
 static AbleKit.Analysis.AnalysisWriteOutcome.Written.operator ==(AbleKit.Analysis.AnalysisWriteOutcome.Written? left, AbleKit.Analysis.AnalysisWriteOutcome.Written? right) -> bool
 static AbleKit.Analysis.AnalysisWriteOutcome.operator !=(AbleKit.Analysis.AnalysisWriteOutcome? left, AbleKit.Analysis.AnalysisWriteOutcome? right) -> bool
 static AbleKit.Analysis.AnalysisWriteOutcome.operator ==(AbleKit.Analysis.AnalysisWriteOutcome? left, AbleKit.Analysis.AnalysisWriteOutcome? right) -> bool
+static AbleKit.Analysis.AudioAnalysis.operator !=(AbleKit.Analysis.AudioAnalysis? left, AbleKit.Analysis.AudioAnalysis? right) -> bool
+static AbleKit.Analysis.AudioAnalysis.operator ==(AbleKit.Analysis.AudioAnalysis? left, AbleKit.Analysis.AudioAnalysis? right) -> bool
+static AbleKit.Analysis.Clip.operator !=(AbleKit.Analysis.Clip? left, AbleKit.Analysis.Clip? right) -> bool
+static AbleKit.Analysis.Clip.operator ==(AbleKit.Analysis.Clip? left, AbleKit.Analysis.Clip? right) -> bool
 static AbleKit.Analysis.DefaultClip.operator !=(AbleKit.Analysis.DefaultClip? left, AbleKit.Analysis.DefaultClip? right) -> bool
 static AbleKit.Analysis.DefaultClip.operator ==(AbleKit.Analysis.DefaultClip? left, AbleKit.Analysis.DefaultClip? right) -> bool
+static AbleKit.Analysis.SampleOverview.FromSamples(System.ReadOnlySpan<float> samples, int channelCount) -> AbleKit.Analysis.SampleOverview!
 static AbleKit.Analysis.SampleOverview.operator !=(AbleKit.Analysis.SampleOverview? left, AbleKit.Analysis.SampleOverview? right) -> bool
 static AbleKit.Analysis.SampleOverview.operator ==(AbleKit.Analysis.SampleOverview? left, AbleKit.Analysis.SampleOverview? right) -> bool
+static AbleKit.Analysis.TempoEstimate.operator !=(AbleKit.Analysis.TempoEstimate? left, AbleKit.Analysis.TempoEstimate? right) -> bool
+static AbleKit.Analysis.TempoEstimate.operator ==(AbleKit.Analysis.TempoEstimate? left, AbleKit.Analysis.TempoEstimate? right) -> bool
+static AbleKit.Analysis.TimeSignature.operator !=(AbleKit.Analysis.TimeSignature left, AbleKit.Analysis.TimeSignature right) -> bool
+static AbleKit.Analysis.TimeSignature.operator ==(AbleKit.Analysis.TimeSignature left, AbleKit.Analysis.TimeSignature right) -> bool
 static AbleKit.Analysis.Transient.operator !=(AbleKit.Analysis.Transient left, AbleKit.Analysis.Transient right) -> bool
 static AbleKit.Analysis.Transient.operator ==(AbleKit.Analysis.Transient left, AbleKit.Analysis.Transient right) -> bool
+static AbleKit.Analysis.UserOnset.operator !=(AbleKit.Analysis.UserOnset left, AbleKit.Analysis.UserOnset right) -> bool
+static AbleKit.Analysis.UserOnset.operator ==(AbleKit.Analysis.UserOnset left, AbleKit.Analysis.UserOnset right) -> bool
+static AbleKit.Analysis.Warp.operator !=(AbleKit.Analysis.Warp? left, AbleKit.Analysis.Warp? right) -> bool
+static AbleKit.Analysis.Warp.operator ==(AbleKit.Analysis.Warp? left, AbleKit.Analysis.Warp? right) -> bool
 static AbleKit.Analysis.WarpMarker.operator !=(AbleKit.Analysis.WarpMarker left, AbleKit.Analysis.WarpMarker right) -> bool
 static AbleKit.Analysis.WarpMarker.operator ==(AbleKit.Analysis.WarpMarker left, AbleKit.Analysis.WarpMarker right) -> bool
 static AbleKit.Sets.SampleMove.operator !=(AbleKit.Sets.SampleMove? left, AbleKit.Sets.SampleMove? right) -> bool
@@ -302,7 +445,11 @@ virtual AbleKit.Analysis.AnalysisWriteOutcome.PrintMembers(System.Text.StringBui
 virtual AbleKit.Tags.TagWriteOutcome.EqualityContract.get -> System.Type!
 virtual AbleKit.Tags.TagWriteOutcome.Equals(AbleKit.Tags.TagWriteOutcome? other) -> bool
 virtual AbleKit.Tags.TagWriteOutcome.PrintMembers(System.Text.StringBuilder! builder) -> bool
+~override AbleKit.Analysis.TimeSignature.Equals(object obj) -> bool
+~override AbleKit.Analysis.TimeSignature.ToString() -> string
 ~override AbleKit.Analysis.Transient.Equals(object obj) -> bool
 ~override AbleKit.Analysis.Transient.ToString() -> string
+~override AbleKit.Analysis.UserOnset.Equals(object obj) -> bool
+~override AbleKit.Analysis.UserOnset.ToString() -> string
 ~override AbleKit.Analysis.WarpMarker.Equals(object obj) -> bool
 ~override AbleKit.Analysis.WarpMarker.ToString() -> string

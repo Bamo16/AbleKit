@@ -31,7 +31,7 @@ dotnet add package AbleKit --prerelease
 .NET 10. Versions below 1.0 may change the API between releases. Analysis files are in the
 `AbleKit.Analysis` namespace, tags in `AbleKit.Tags`, sets in `AbleKit.Sets`.
 
-## Read a warp
+## Read an analysis file
 
 ```csharp
 using AbleKit.Analysis;
@@ -42,28 +42,56 @@ if (AnalysisFile.TryRead(@"C:\Samples\Break.wav.asd", out var analysis))
     if (analysis.DefaultClip is { } clip)
         Console.WriteLine($"clip: beat {clip.Start} to {clip.End}");
 
-    foreach (var marker in analysis.Markers)
+    foreach (var marker in analysis.Warp.Markers)
         Console.WriteLine($"{marker.Seconds:F3} s is beat {marker.Beat}");
 
     // Live stores no tempo, only markers; a tempo is the slope between two of them.
-    Console.WriteLine($"{analysis.TempoAt(0):F2} BPM at the start");
+    Console.WriteLine($"{analysis.Warp.TempoAt(0):F2} BPM at the start");
 }
 ```
+
+An `AnalysisFile` holds everything in the file, in three parts named after what Live shows:
+
+- **`Clip`**: the clip's start and end, its loop, gain, transpose and detune, HiQ, Fade, colour and
+  launch settings;
+- **`Warp`**: the warp markers, the warp mode and every mode's settings, and the time signature;
+- **`Audio`**: what Live measured in the audio: the waveform overview, the transients, and the file's
+  size.
 
 `TryRead` returns false for a file it cannot read or does not recognise, and never throws for a
 bad file. `TryParse` does the same for bytes already in memory.
 
-## Write an analysis file
+## Change and write one
 
-Live only analyses a sample once you open it, and only writes a warp when you press *Save Default
-Clip*. To have a new stem arrive already warped, write its analysis file from a **sibling**: another
-stem of the same song that you have warped and saved.
+Change anything with `with`, then write the result to any path:
 
 ```csharp
-// The new stem, decoded to floats from -1 to 1 with its channels interleaved,
-// by whatever decoder you use (ffmpeg's -f f32le, NAudio, …).
-float[] samples = Decode(@"C:\Samples\Song (Vocal).flac");
+var raised = analysis with { Clip = analysis.Clip with { PitchCoarse = analysis.Clip.PitchCoarse + 1 } };
 
+var outcome = new AnalysisFileWriter().Write(@"C:\Samples\Break (up 1).wav.asd", raised);
+```
+
+- **Live pairs an analysis file with the audio file named the same**, minus `.asd`. Where you write
+  it, and why, is up to you.
+- **Writing a file back gives the bytes Live wrote**, checked against about a thousand real files.
+  The one difference: list entries carry internal ids that record a file's editing history, and the
+  writer numbers them afresh, as Live does for a new warp.
+- **It refuses what Live could not have written**, such as markers out of order or an overview of the
+  wrong size, with an `InvalidOperationException`, rather than leave Live to make sense of it.
+- **It writes through a temporary file moved into place**, so Live never reads half a file.
+- `ToBytes()` gives the bytes without writing them.
+
+The waveform and transients belong to one recording. `SampleOverview.FromSamples` draws the overview
+for other audio exactly as Live would, bit for bit, from samples you decode yourself (ffmpeg's
+`-f f32le`, NAudio, …). Transients you detect yourself; the library does not.
+
+### A stem's analysis from its sibling's
+
+Live only analyses a sample once you open it. To have a new stem arrive already warped, take the
+analysis file of a **sibling**, another stem of the same song you have warped and saved, and give it
+the new stem's audio:
+
+```csharp
 var outcome = new AnalysisFileWriter().WriteFromSibling(
     siblingPath: @"C:\Samples\Song (Instrumental).flac.asd",
     audioPath: @"C:\Samples\Song (Vocal).flac",
@@ -71,32 +99,12 @@ var outcome = new AnalysisFileWriter().WriteFromSibling(
     channelCount: 2,
     transients: [new Transient(Position: 11025, Energy: 0.8f), /* … */]
 );
-
-switch (outcome)
-{
-    case AnalysisWriteOutcome.Written(var path):
-        Console.WriteLine($"Wrote {path}");
-        break;
-    case AnalysisWriteOutcome.Rejected(var error):
-        Console.WriteLine($"That sibling will not do: {error}");
-        break;
-    case AnalysisWriteOutcome.Failed(var error):
-        Console.WriteLine($"Could not read or write a file: {error}");
-        break;
-}
 ```
 
-What the writer does:
-
-- **It copies the sibling's warp**: markers, default clip, warp mode and every clip setting.
-- **It draws the waveform from your samples**, exactly as Live would: it reproduces Live's own
-  overview bit for bit.
-- **It writes the transients you give it.** It does not detect them. Live shows them as ticks in
-  the clip view and warps from them; with none, Live shows none and does not look for its own.
-- **It refuses a sibling that does not fit**: one never saved, or one of a different length or
-  channel count. Stems of one song are usually the same length, but not always.
-- **It replaces any analysis file beside the audio**, writing through a temporary file moved into
-  place. The sibling can be the audio's own old file, to keep a warp after the audio was re-cut.
+It keeps the sibling's clip and warp, draws the overview from `samples`, writes your transients and
+the audio's size, and clears the sibling's transient edits, which belong to the sibling's audio. It
+refuses a sibling never saved, or one of another length or channel count: stems of one song are
+usually the same length, but not always.
 
 Live accepts these files as its own and leaves them as written, as far as it has been tried. See
 [Writing one](docs/analysis-file-format.md#writing-one) for what was tested.
@@ -210,7 +218,7 @@ What the relink does:
 | Language | C# library | C# library | Rust command line | Python | Python |
 | Live sets (`.als`) | finds and relinks samples | reads, writes | | | |
 | Live 12 `.asd` | reads, writes | | | Live 9 and 10 | reads |
-| Warp mode, default clip, saved flag | yes | | | | |
+| Every clip and warp setting | reads, writes | | | | |
 | XMP tags | reads, writes | | reads, writes | | |
 | Hidden keywords | reads | | | | |
 | Live's file index | reads | | | | |

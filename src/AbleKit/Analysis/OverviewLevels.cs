@@ -7,15 +7,19 @@ namespace AbleKit.Analysis;
 internal static class OverviewLevels
 {
     /// <summary>
-    /// Every level, finest first, as the half-precision bits Live stores: min₀ max₀ min₁ max₁ per
-    /// bin. Each level's bins are 2^<paramref name="log2"/> of the level below, down to a single bin.
+    /// Every level, finest first, as Live stores it: min₀ max₀ min₁ max₁ per bin. Each level's bins
+    /// are 2^<paramref name="log2"/> of the level below, down to a single bin.
     /// </summary>
-    internal static ushort[][] Compute(ReadOnlySpan<float> samples, int channelCount, int log2)
+    internal static ReadOnlyMemory<Half>[] Compute(
+        ReadOnlySpan<float> samples,
+        int channelCount,
+        int log2
+    )
     {
         var binSize = 1 << log2;
         var frames = samples.Length / channelCount;
         var level = Finest(samples, channelCount, binSize, frames);
-        List<ushort[]> levels = [Truncate(level)];
+        List<ReadOnlyMemory<Half>> levels = [Truncate(level)];
 
         // Truncation keeps order, so the minimum of truncated values is the truncated minimum.
         while (level.Length > 2 * channelCount)
@@ -91,7 +95,8 @@ internal static class OverviewLevels
         return level;
     }
 
-    private static ushort[] Truncate(float[] level) => [.. level.Select(TruncateToHalf)];
+    private static Half[] Truncate(float[] level) =>
+        [.. level.Select(value => BitConverter.UInt16BitsToHalf(TruncateToHalf(value)))];
 
     /// <summary>The half-precision bits of <paramref name="value"/>, rounded toward zero.</summary>
     internal static ushort TruncateToHalf(float value)

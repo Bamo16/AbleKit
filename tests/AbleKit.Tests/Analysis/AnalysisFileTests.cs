@@ -2,50 +2,127 @@ using AbleKit.Analysis;
 
 namespace AbleKit.Tests.Analysis;
 
+/// <summary>Writing the model back: Live's own files, edited ones, and ones Live could not have written.</summary>
 public sealed class AnalysisFileTests
 {
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public void A_tempo_needs_two_markers_to_exist(int markers)
+    [InlineData("sidecar-clicks.asd")]
+    [InlineData("sidecar-clicks-unsaved.asd")]
+    [InlineData("sidecar-mono.asd")]
+    [InlineData("sidecar-tail-tempo.asd")]
+    public void A_file_Live_wrote_writes_back_as_Live_wrote_it(string fixture)
     {
-        Assert.Null(
-            Warp([.. Enumerable.Range(0, markers).Select(i => new WarpMarker(i, i))]).TempoAt(0)
+        // Live's list ids record the file's editing history; the writer numbers them afresh.
+        var asd = File.ReadAllBytes(ClickTrack.Fixture(fixture));
+
+        Assert.Equal(RoundTrip.WithFreshIds(asd), RoundTrip.Rewrite(asd));
+    }
+
+    [Fact]
+    public void A_file_from_an_earlier_Live_12_differs_only_in_the_order_its_schema_lists_types()
+    {
+        // DBraun's file: the same type definitions, listed in another build's order.
+        var asd = RoundTrip.WithFreshIds(
+            File.ReadAllBytes(ClickTrack.Fixture("sidecar-loop-on.asd"))
         );
+        var written = RoundTrip.Rewrite(asd);
+        var (start, end) = RoundTrip.Schema(asd);
+
+        Assert.Equal(asd.Length, written.Length);
+        Assert.Equal(asd[..start], written[..start]);
+        Assert.Equal(asd[end..], written[end..]);
+        Assert.Equal(RoundTrip.Types(asd), RoundTrip.Types(written));
     }
 
     [Fact]
-    public void Four_beats_across_two_seconds_is_a_hundred_and_twenty()
+    public void A_changed_setting_is_the_only_thing_that_changes()
     {
-        var warp = Warp(new WarpMarker(0, 0), new WarpMarker(2, 4));
+        var asd = RoundTrip.WithFreshIds(
+            File.ReadAllBytes(ClickTrack.Fixture("sidecar-clicks.asd"))
+        );
+        Assert.True(AnalysisFile.TryParse(asd, out var analysis));
+        Assert.True(AnalysisFileParser.TryScan(asd, out var scan));
 
-        Assert.Equal(120, warp.TempoAt(1)!.Value, 9);
+        var raised = analysis with { Clip = analysis.Clip with { PitchCoarse = 1 } };
+        var written = raised.ToBytes();
+
+        var pitch = scan.Layout.Values["PitchCoarse.Value"];
+        var changed = Enumerable.Range(0, asd.Length).Where(i => asd[i] != written[i]).ToList();
+
+        Assert.Equal(asd.Length, written.Length);
+        Assert.All(changed, i => Assert.InRange(i, pitch, pitch + sizeof(float) - 1));
+        Assert.True(AnalysisFile.TryParse(written, out var reread));
+        Assert.Equal(1, reread.Clip.PitchCoarse);
     }
 
     [Fact]
-    public void The_tempo_is_the_one_of_the_segment_the_time_falls_in()
+    public void A_moved_marker_reads_back_where_it_was_put()
     {
-        var warp = Warp(new WarpMarker(0, 0), new WarpMarker(2, 4), new WarpMarker(3, 8));
+        Assert.True(
+            AnalysisFile.TryRead(ClickTrack.Fixture("sidecar-clicks.asd"), out var analysis)
+        );
+        var markers = analysis.Warp.Markers;
 
-        Assert.Equal(120, warp.TempoAt(1)!.Value, 9);
-        Assert.Equal(240, warp.TempoAt(2.5)!.Value, 9);
+        var moved = analysis with
+        {
+            Warp = analysis.Warp with
+            {
+                Markers = [markers[0] with { Beat = -4 }, .. markers.Skip(1)],
+            },
+        };
+
+        Assert.True(AnalysisFile.TryParse(moved.ToBytes(), out var reread));
+        Assert.Equal(moved.Warp.Markers, reread.Warp.Markers);
     }
 
     [Fact]
-    public void A_time_outside_the_markers_reads_the_nearest_segment()
+    public void A_file_with_no_markers_reads_back_with_none()
     {
-        var warp = Warp(new WarpMarker(10, 0), new WarpMarker(12, 4), new WarpMarker(13, 8));
+        Assert.True(
+            AnalysisFile.TryRead(ClickTrack.Fixture("sidecar-clicks.asd"), out var analysis)
+        );
 
-        Assert.Equal(120, warp.TempoAt(0)!.Value, 9);
-        Assert.Equal(240, warp.TempoAt(600)!.Value, 9);
+        var cleared = analysis with { Warp = analysis.Warp with { Markers = [] } };
+
+        Assert.True(AnalysisFile.TryParse(cleared.ToBytes(), out var reread));
+        Assert.Empty(reread.Warp.Markers);
     }
 
     [Fact]
-    public void Two_markers_at_the_same_second_have_no_tempo_between_them()
+    public void A_marker_before_the_one_ahead_of_it_is_refused()
     {
-        Assert.Null(Warp(new WarpMarker(4, 0), new WarpMarker(4, 8)).TempoAt(4));
+        Assert.True(
+            AnalysisFile.TryRead(ClickTrack.Fixture("sidecar-clicks.asd"), out var analysis)
+        );
+        var markers = analysis.Warp.Markers;
+
+        var crossed = analysis with
+        {
+            Warp = analysis.Warp with
+            {
+                Markers = [markers[0] with { Beat = 40 }, .. markers.Skip(1)],
+            },
+        };
+
+        Assert.Throws<InvalidOperationException>(crossed.ToBytes);
     }
 
-    private static AnalysisFile Warp(params WarpMarker[] markers) =>
-        new(true, WarpMode.Complex, 4, 4, markers);
+    [Fact]
+    public void An_overview_Live_could_not_have_drawn_is_refused()
+    {
+        Assert.True(
+            AnalysisFile.TryRead(ClickTrack.Fixture("sidecar-clicks.asd"), out var analysis)
+        );
+        var overview = analysis.Audio.Overview;
+
+        var truncated = analysis with
+        {
+            Audio = analysis.Audio with
+            {
+                Overview = overview with { Levels = [.. overview.Levels.SkipLast(1)] },
+            },
+        };
+
+        Assert.Throws<InvalidOperationException>(truncated.ToBytes);
+    }
 }

@@ -3,28 +3,31 @@ using AbleKit.Analysis;
 namespace AbleKit.Tests.Analysis;
 
 /// <summary>
-/// One stem's sidecar before and after <em>Save Default Clip</em>, cut short after the warp
-/// section, a Live 12 sidecar with Loop on from DBraun/AbletonParsing, and click tracks' sidecars.
+/// Click tracks' sidecars, before and after <em>Save Default Clip</em>, and a Live 12 sidecar with
+/// Loop on from DBraun/AbletonParsing.
 /// </summary>
 public sealed class AnalysisFileParserTests
 {
     [Fact]
     public void An_analysed_sidecar_has_no_default_clip_and_no_markers()
     {
-        var warp = Read("sidecar-analysed.asd");
+        var analysis = Read("sidecar-clicks-unsaved.asd");
 
-        Assert.Null(warp.DefaultClip);
-        Assert.Empty(warp.Markers);
+        Assert.False(analysis.IsDefaultClipSaved);
+        Assert.Null(analysis.DefaultClip);
+        Assert.Empty(analysis.Warp.Markers);
     }
 
     [Fact]
     public void Save_default_clip_writes_the_clip_and_the_markers()
     {
-        var warp = Read("sidecar-default-clip-saved.asd");
+        // 16 s of clicks at 120 BPM: 32 beats, with Live's hidden marker 1/32 beat past the last.
+        var analysis = Read("sidecar-clicks.asd");
 
-        Assert.Equal(new DefaultClip(32, 478.26300236222113), warp.DefaultClip);
-        Assert.Equal([157, 157.03125], warp.Markers.Select(marker => marker.Beat));
-        Assert.Equal(175.0007, warp.TempoAt(0)!.Value, 4);
+        Assert.True(analysis.IsDefaultClipSaved);
+        Assert.Equal(new DefaultClip(0, 32), analysis.DefaultClip);
+        Assert.Equal([0, 32, 32.03125], analysis.Warp.Markers.Select(marker => marker.Beat));
+        Assert.Equal(120, analysis.Warp.TempoAt(0)!.Value, 6);
     }
 
     [Fact]
@@ -40,8 +43,8 @@ public sealed class AnalysisFileParserTests
         var warp = Read("sidecar-mono.asd");
 
         Assert.Equal(new DefaultClip(0, 32), warp.DefaultClip);
-        Assert.Equal([0, 32, 32.03125], warp.Markers.Select(marker => marker.Beat));
-        Assert.Equal(5513, warp.Overview?.Peaks.Count);
+        Assert.Equal([0, 32, 32.03125], warp.Warp.Markers.Select(marker => marker.Beat));
+        Assert.Equal(5513, warp.Audio.Overview.BinCount);
     }
 
     [Fact]
@@ -51,27 +54,26 @@ public sealed class AnalysisFileParserTests
         // 8 s only. The 140 was set by dragging a later click onto the grid.
         var warp = Read("sidecar-tail-tempo.asd");
 
-        Assert.Equal(120, warp.TempoAt(4)!.Value, 3);
-        Assert.Equal(140, warp.TempoAt(12)!.Value, 1);
+        Assert.Equal(120, warp.Warp.TempoAt(4)!.Value, 3);
+        Assert.Equal(140, warp.Warp.TempoAt(12)!.Value, 1);
     }
 
     [Fact]
     public void The_overview_holds_a_peak_for_every_128_samples()
     {
         // The DBraun sidecar is 181,675 samples long, whole to the end of the file.
-        var overview = Read("sidecar-loop-on.asd").Overview;
+        var overview = Read("sidecar-loop-on.asd").Audio.Overview;
 
-        Assert.NotNull(overview);
         Assert.Equal(128, overview.SamplesPerBin);
-        Assert.Equal(1420, overview.Peaks.Count);
-        Assert.InRange(overview.Peaks.Max(), 0.1f, 1.5f);
+        Assert.Equal(1420, overview.BinCount);
+        Assert.InRange(overview.PeakBetween(0, long.MaxValue), 0.1f, 1.5f);
     }
 
     [Fact]
     public void Live_puts_a_transient_on_every_click()
     {
         // 32 clicks, one every half second at 44.1 kHz; Live places the first a frame late.
-        var transients = Read("sidecar-clicks.asd").Transients;
+        var transients = Read("sidecar-clicks.asd").Audio.Transients;
 
         Assert.NotNull(transients);
         Assert.Equal(
@@ -81,22 +83,14 @@ public sealed class AnalysisFileParserTests
         Assert.All(transients, transient => Assert.InRange(transient.Energy, 0.9f, 1f));
     }
 
-    [Fact]
-    public void A_sidecar_cut_short_before_its_overview_still_reads_without_one()
-    {
-        var warp = Read("sidecar-default-clip-saved.asd");
-
-        Assert.Null(warp.Overview);
-        Assert.NotNull(warp.DefaultClip);
-    }
-
     [Theory]
     [InlineData(0)]
     [InlineData(100)]
-    [InlineData(32000)]
+    [InlineData(30000)]
+    [InlineData(50000)]
     public void A_sidecar_cut_short_is_unreadable(int length)
     {
-        var asd = File.ReadAllBytes(Fixture("sidecar-default-clip-saved.asd"));
+        var asd = File.ReadAllBytes(Fixture("sidecar-clicks.asd"));
 
         Assert.False(AnalysisFile.TryParse(asd.AsSpan(0, length), out _));
     }
@@ -104,7 +98,7 @@ public sealed class AnalysisFileParserTests
     [Fact]
     public void A_head_that_does_not_lead_to_the_clip_is_unreadable()
     {
-        var asd = File.ReadAllBytes(Fixture("sidecar-default-clip-saved.asd"));
+        var asd = File.ReadAllBytes(Fixture("sidecar-clicks.asd"));
         asd[2]++;
 
         Assert.False(AnalysisFile.TryParse(asd, out _));

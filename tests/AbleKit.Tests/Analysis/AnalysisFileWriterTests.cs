@@ -36,7 +36,7 @@ public sealed class AnalysisFileWriterTests : IDisposable
         Assert.True(AnalysisFile.TryParse(live, out var analysis));
         Assert.True(AnalysisFileParser.TryScan(live, out var scan));
 
-        var written = Write(sibling, track, analysis.Transients!);
+        var written = Write(sibling, track, analysis.Audio.Transients);
 
         // Live's file, with the user onsets emptied and switched off.
         var onsets = scan.Layout.Arrays["UserOnsets.UserOnsets"];
@@ -75,11 +75,15 @@ public sealed class AnalysisFileWriterTests : IDisposable
             )
         );
 
-        Assert.Equal(sibling.Markers, written.Markers);
+        Assert.Equal(sibling.Warp.Markers, written.Warp.Markers);
         Assert.Equal(sibling.DefaultClip, written.DefaultClip);
-        Assert.Equal(sibling.Mode, written.Mode);
-        Assert.Equal(transients, written.Transients);
-        Assert.Equal(sibling.Overview!.Peaks.Max() / 4, written.Overview!.Peaks.Max(), 3);
+        Assert.Equal(sibling.Warp.Mode, written.Warp.Mode);
+        Assert.Equal(transients, written.Audio.Transients);
+        Assert.Equal(
+            sibling.Audio.Overview.PeakBetween(0, long.MaxValue) / 4,
+            written.Audio.Overview.PeakBetween(0, long.MaxValue),
+            3
+        );
     }
 
     [Fact]
@@ -88,7 +92,7 @@ public sealed class AnalysisFileWriterTests : IDisposable
         var written = Write(ClickTrack.Fixture("sidecar-clicks.asd"), ClickTrack.Stereo, []);
 
         Assert.True(AnalysisFile.TryParse(written, out var analysis));
-        Assert.Empty(analysis.Transients!);
+        Assert.Empty(analysis.Audio.Transients);
     }
 
     [Fact]
@@ -135,7 +139,7 @@ public sealed class AnalysisFileWriterTests : IDisposable
         var outcome = WriteOutcome($"{audio}.asd", audio, ClickTrack.Stereo, [new(100, 1)]);
 
         Assert.IsType<AnalysisWriteOutcome.Written>(outcome);
-        Assert.Equal([new(100, 1)], Read($"{audio}.asd").Transients);
+        Assert.Equal([new(100, 1)], Read($"{audio}.asd").Audio.Transients);
     }
 
     [Fact]

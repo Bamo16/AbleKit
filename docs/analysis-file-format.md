@@ -107,13 +107,21 @@ instance:
 - **`RemoteableList`** and any `List<T>` (field count −1): an int32 **next id**, then for each
   element its class name, an int32 id, and its fields; then an **empty class name, `00 00`**,
   ending the list. The list is never count-prefixed (measured). The int32 before it looks like a
-  count and is not one: it is an id allocator, higher than every element's id.
+  count and is not one: it is an id allocator, higher than every element's id. The ids record the
+  list's editing history: a warp Live has just made is numbered 0, 1, 2… with the allocator at the
+  count, and deleting and adding markers leaves gaps (measured on the click fixtures, 2026-10-01).
 - **`RemoteableArray`** (field count −3): an int32 count, the element class name (written even
   when the count is 0), then the elements packed, with no names or ids.
 
 A Live 12 `SampleData` has **36 fields** in every file measured. Scalar settings are wrapped in
 small classes (`RemoteableDouble`, `RemoteableBool`, `UserFloat`, `RemoteableEnum`), each with a
 single `Value` field, so the path to the clip's start is `LoopStart.Value`.
+
+**The schema lists only the types the file uses.** A file with no warp markers leaves out
+`WarpMarker` and is otherwise the same: 12 of 983 files (measured, 2026-10-01). Every other file
+from Live 12.3 and 12.4 has the identical schema, byte for byte. **The order of the types is not
+fixed**: the Live 12 file from DBraun/AbletonParsing declares the same definitions in another order.
+A reader must not depend on it.
 
 ## The instance
 
@@ -171,6 +179,7 @@ view lives only in the set, and *Save Default Clip* does not keep it (from the s
 |---|---|---|
 | `OnSets.Positions` | int32 array, frames | **the transients Live detected**. Different per file, even for stems of one song (measured). In order, but a position is repeated now and then: 15 times in 881,841 transients (measured, 2026-10-01) |
 | `OnSets.TransitionEnergies` | float32 array | one strength per transient, from 0.0002 to 1.0 in the library (measured) |
+| `OnSets.IsSet`, `OnSets.Version` | bool, int32 | true and 5 in all 983 files from Live 12.3 and 12.4; the Live 12 file from DBraun/AbletonParsing has version 4. Perhaps the version of the transient detector |
 | `UserOnsets.HasUserOnsets` | bool | **which list the clip shows**: on, `UserOnsets`; off, `OnSets` (observed, 2026-10-01) |
 | `UserOnsets.UserOnsets` | array of `OnsetEvent` (`Time` seconds, `Energy`, `IsVolatile`) | the transients as the saved clip holds them; empty until *Save Default Clip* (observed) |
 
@@ -191,7 +200,9 @@ library's 15,474 volatile onsets sit exactly on a marker's time, all with energy
 `AufTaktData` ("Auftakt" is German for upbeat) holds `PreprocessedDataChunk` (bytes),
 `UnbiasedTempoEstimate` (float64 BPM, `double.MaxValue` when unset), `IsSet` and `Version`. It is
 set on only 14 of 845 files, and on those it matched the warped tempo within 1 BPM on 9. Nothing
-found says what makes Live fill it in. Do not treat it as a tempo source.
+found says what makes Live fill it in. Do not treat it as a tempo source. Unset, it is an empty
+chunk, `double.MaxValue`, false and version `int.MinValue`; set, its version is 5 (measured, 983
+files). The second chunk repeats it exactly, in all 983.
 
 ### The audio and the overview
 
@@ -200,8 +211,11 @@ found says what makes Live fill it in. Do not treat it as a tempo source.
 | `ExtraLength` | int32 | 0 everywhere |
 | `OriginalFileSize` | int32, bytes | the audio's size when it was analysed (measured: matches on 952 of 969, 2026-10-01). Live does not re-analyse a file whose audio later changed: the other 17 still draw the waveform of audio since replaced |
 | `OverView.OverViewLevels` | list of float16 arrays | **the waveform**: a minimum and a maximum per channel per bin, interleaved (min₀ max₀ min₁ max₁), as float16 **truncated toward zero**. Each coarser level is the minimum and maximum over the finer level's bins. Reproduced bit for bit from the decoded audio, a WAV and a 24-bit FLAC, at every level (measured, 2026-10-01) |
-| `OverView.SamplesPerBinLog2` | int32 | level *k*'s bin is 2^(`SamplesPerBinLog2` × (*k* + 1)) samples. 7 up to 379 s of audio, 8 from 387 s |
-| `OverView.ChannelCount`, `.Version` | int32 | 2 and 2 everywhere |
+| `OverView.SamplesPerBinLog2` | int32 | level *k*'s bin is 2^(`SamplesPerBinLog2` × (*k* + 1)) samples. 7 up to 16,716,224 frames, 8 from 17,070,528 (measured, 983 files): consistent with 7 up to 2^24 frames, about 6:20 at 44.1 kHz. The levels go on until one has a single bin (measured, 983 files) |
+| `OverView.ChannelCount`, `.Version` | int32 | the channels, and 2 everywhere |
+
+The head's trailing bytes follow the channels too: two zero bytes per channel, in all 983 files.
+`ExtraLength` is 0 and the first chunk's int32 365 in all 983.
 
 The overview rule is checked by a writer too: built from the decoded audio, it reproduced Live's
 overview for every level of the stereo and mono click fixtures, and for three vocal stems of 4 to 5
@@ -250,11 +264,16 @@ With the first marker at 0 s and beat 0, this is the hidden handle alone: a warp
 
 ## Writing one
 
-[AbleKit](../README.md)'s `AnalysisFileWriter` writes a complete file for audio Live
-has not seen, borrowing everything it cannot compute from a **sibling**: another stem of the same
-song, warped and saved. It keeps the sibling's head, schema, clip and warp, and replaces what comes
-from the audio: the overview, the transients and `OriginalFileSize`. It switches `HasUserOnsets`
-off and empties `UserOnsets`, since the sibling's user onsets sit on the sibling's audio.
+[AbleKit](../README.md) reads a file into a model of every field and writes it back from that
+model, generating the schema rather than copying it. Every file measured, all 983 from Live 12.3
+and 12.4, writes back byte for byte once its list ids are numbered afresh (2026-10-01). The
+DBraun/AbletonParsing file from an earlier Live 12 writes back with its schema in the 12.3 order and
+nothing else changed.
+
+For audio Live has not seen, AbleKit borrows what it cannot compute from a **sibling**, another stem
+of the same song, warped and saved: its head's table, clip and warp. It replaces what comes from the
+audio, the overview, the transients and `OriginalFileSize`, and switches `HasUserOnsets` off and
+empties `UserOnsets`, since the sibling's user onsets sit on the sibling's audio.
 
 What Live does with files it did not write (observed, 2026-09-15 to 2026-10-01):
 
@@ -298,6 +317,8 @@ would be wrong and the overview a different size.
   (Beats, Re-Pitch, Complex and Complex Pro; Beats and Re-Pitch observed 2026-10-01).
 - Whether `IsWarped` is ever false in practice.
 - What makes Live fill in `AufTaktData`. The writer keeps the sibling's, as harmless (observed).
+- Whether Live needs the head's table to be the real one. If it does not, a file can be written
+  for audio with no sibling at all.
 - Anything about Live 11 and earlier. DBraun/AbletonParsing reads Live 9 and 10, whose files are
   laid out differently.
 
