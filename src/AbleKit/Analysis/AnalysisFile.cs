@@ -4,8 +4,8 @@ namespace AbleKit.Analysis;
 
 /// <summary>
 /// Everything an analysis file, the <c>.asd</c> beside a sample, holds: the clip Live pulls in, how
-/// it is warped, and what Live measured in the audio. Read one with <see cref="AnalysisFileReader"/>,
-/// change it with <c>with</c>, and write it with <see cref="AnalysisFileWriter"/>.
+/// it is warped, and what Live measured in the audio. Read one with <see cref="TryRead"/>, change it
+/// with <c>with</c>, and write it with <see cref="Write"/>.
 /// </summary>
 public sealed record AnalysisFile
 {
@@ -38,19 +38,95 @@ public sealed record AnalysisFile
         };
 
     /// <summary>
-    /// Reads an analysis file already in memory; false when it is not one this library recognises.
-    /// <see cref="AnalysisFileReader"/> reads one from disk and says why it could not.
+    /// Reads the analysis file at <paramref name="path"/>: the sample's <c>.asd</c>, its audio file's
+    /// path with <c>.asd</c> added. Live writes one only once a sample has been opened, so many
+    /// samples have none; <see cref="TryRead"/> reads one that may not be there.
+    /// </summary>
+    /// <exception cref="FileNotFoundException">There is no file at <paramref name="path"/>.</exception>
+    /// <exception cref="DirectoryNotFoundException">There is no folder at <paramref name="path"/>.</exception>
+    /// <exception cref="IOException">The file is locked by another program. Trying again may help.</exception>
+    /// <exception cref="UnauthorizedAccessException">Reading the file is not permitted.</exception>
+    /// <exception cref="InvalidDataException">
+    /// The file is not an analysis file this library recognises: cut short, or laid out differently, as
+    /// a Live version other than 12 may write it. The message says where reading gave up.
+    /// </exception>
+    public static AnalysisFile Read(string path) => Parse(File.ReadAllBytes(path));
+
+    /// <summary>
+    /// Reads the analysis file at <paramref name="path"/>, or returns false when there is none. A file
+    /// that is there but cannot be read throws, as <see cref="Read"/> does.
+    /// </summary>
+    /// <exception cref="IOException">The file is locked by another program. Trying again may help.</exception>
+    /// <exception cref="UnauthorizedAccessException">Reading the file is not permitted.</exception>
+    /// <exception cref="InvalidDataException">
+    /// The file is not an analysis file this library recognises. The message says where reading gave up.
+    /// </exception>
+    public static bool TryRead(string path, [NotNullWhen(true)] out AnalysisFile? analysis)
+    {
+        byte[] asd;
+
+        try
+        {
+            asd = File.ReadAllBytes(path);
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
+        {
+            analysis = null;
+
+            return false;
+        }
+
+        analysis = Parse(asd);
+
+        return true;
+    }
+
+    /// <summary>Reads an analysis file already in memory.</summary>
+    /// <exception cref="InvalidDataException">
+    /// The bytes are not an analysis file this library recognises. The message says where reading gave up.
+    /// </exception>
+    public static AnalysisFile Parse(ReadOnlySpan<byte> asd) =>
+        AnalysisFileParser.TryParse(asd, out var analysis, out var reason)
+            ? analysis
+            : throw new InvalidDataException($"Not an analysis file AbleKit reads: {reason}.");
+
+    /// <summary>
+    /// Reads an analysis file already in memory, or returns false when it is not one this library
+    /// recognises. <see cref="Parse"/> says why.
     /// </summary>
     public static bool TryParse(
         ReadOnlySpan<byte> asd,
         [NotNullWhen(true)] out AnalysisFile? analysis
-    )
-    {
-        analysis = AnalysisFileParser.Parse(asd) is AnalysisReadOutcome.Read read
-            ? read.Analysis
-            : null;
+    ) => AnalysisFileParser.TryParse(asd, out analysis, out _);
 
-        return analysis is not null;
+    /// <summary>
+    /// Writes the file to <paramref name="path"/>, replacing any file there, through a temporary file
+    /// moved into place so Live never reads half a file. Live pairs an analysis file with the audio
+    /// file whose name it carries plus <c>.asd</c>.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// The file holds something Live could not have written; see <see cref="ToBytes"/>. Nothing is written.
+    /// </exception>
+    /// <exception cref="DirectoryNotFoundException">The folder is not there. Nothing is written.</exception>
+    /// <exception cref="IOException">The file is locked by another program. Nothing is written.</exception>
+    /// <exception cref="UnauthorizedAccessException">Writing there is not permitted. Nothing is written.</exception>
+    public void Write(string path)
+    {
+        var asd = ToBytes();
+        var temporary = $"{path}.tmp";
+
+        File.WriteAllBytes(temporary, asd);
+
+        try
+        {
+            File.Move(temporary, path, overwrite: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            File.Delete(temporary);
+
+            throw;
+        }
     }
 
     /// <summary>

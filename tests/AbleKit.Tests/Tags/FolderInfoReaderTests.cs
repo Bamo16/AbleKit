@@ -115,13 +115,13 @@ public sealed class FolderInfoReaderTests : IDisposable
     }
 
     [Fact]
-    public void A_malformed_xmp_reads_empty_rather_than_throwing()
+    public void A_half_written_xmp_throws_rather_than_reading_as_untagged()
     {
         var folderInfo = Path.Combine(_root, "Ableton Folder Info");
         Directory.CreateDirectory(folderInfo);
         File.WriteAllText(Path.Combine(folderInfo, "half-written.xmp"), "<x:xmpmeta><rdf:RDF");
 
-        Assert.Empty(new FolderInfoReader().Read(_root).Entries);
+        Assert.Throws<TagStoreChangedException>(() => new FolderInfoReader().Read(_root));
     }
 
     [Fact]

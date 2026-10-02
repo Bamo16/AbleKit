@@ -34,9 +34,9 @@ public sealed class FolderInfoWriterTests : IDisposable
     [Fact]
     public void A_store_is_created_where_there_is_none()
     {
-        var outcome = _writer.Apply(_root, [Assign("a.flac", "Key|A", "Key|Minor")]);
+        var applied = _writer.Apply(_root, [Assign("a.flac", "Key|A", "Key|Minor")]);
 
-        Assert.IsType<TagWriteOutcome.Written>(outcome);
+        Assert.Equal(1, applied);
         Assert.Equal("dc66a3fa-0fe1-5352-91cf-3ec237e9ee90.xmp", Path.GetFileName(XmpPath));
         Assert.True(_reader.Read(_root).TryGet("a.flac", out var tags));
         Assert.Equal(["Key|A", "Key|Minor"], tags.Keywords);
@@ -84,9 +84,9 @@ public sealed class FolderInfoWriterTests : IDisposable
     public void A_keyword_Live_does_not_know_yet_is_written_as_given()
     {
         // Live spells this key C♯; a user may still want a tag of their own.
-        var outcome = _writer.Apply(_root, [Assign("a.flac", "Key|C#", "Mood|Wistful")]);
+        var applied = _writer.Apply(_root, [Assign("a.flac", "Key|C#", "Mood|Wistful")]);
 
-        Assert.IsType<TagWriteOutcome.Written>(outcome);
+        Assert.Equal(1, applied);
         Assert.True(_reader.Read(_root).TryGet("a.flac", out var tags));
         Assert.Equal(["Key|C#", "Mood|Wistful"], tags.Keywords);
     }
@@ -94,14 +94,15 @@ public sealed class FolderInfoWriterTests : IDisposable
     [Fact]
     public void One_malformed_keyword_stops_the_whole_write()
     {
-        var outcome = _writer.Apply(
-            _root,
-            [Assign("good.flac", "Key|A", "Key|Minor"), Assign("bad.flac", "Key|", "Key|Major")]
+        // An ArgumentException, not an IOException: a bad keyword is not fixed by retrying.
+        var rejected = Assert.Throws<ArgumentException>(() =>
+            _writer.Apply(
+                _root,
+                [Assign("good.flac", "Key|A", "Key|Minor"), Assign("bad.flac", "Key|", "Key|Major")]
+            )
         );
 
-        // Rejected, not Stale: a bad keyword is not fixed by retrying.
-        var rejected = Assert.IsType<TagWriteOutcome.Rejected>(outcome);
-        Assert.Contains("'Key|'", rejected.Error);
+        Assert.Contains("'Key|'", rejected.Message);
         Assert.False(Directory.Exists(Path.Combine(_root, "Ableton Folder Info")));
     }
 
@@ -115,13 +116,14 @@ public sealed class FolderInfoWriterTests : IDisposable
         var before = File.ReadAllBytes(path);
         var stale = File.GetLastWriteTimeUtc(path).AddSeconds(-30);
 
-        var replaced = FolderInfoWriter.Replace(
-            path,
-            XDocument.Parse("<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" />"),
-            stale
+        Assert.Throws<TagStoreChangedException>(() =>
+            FolderInfoWriter.Replace(
+                path,
+                XDocument.Parse("<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" />"),
+                stale
+            )
         );
 
-        Assert.False(replaced);
         Assert.Equal(before, File.ReadAllBytes(path));
 
         Assert.Empty(Directory.EnumerateFiles(Path.Combine(_root, "Ableton Folder Info"), "*.tmp"));
@@ -134,13 +136,66 @@ public sealed class FolderInfoWriterTests : IDisposable
 
         var path = XmpPath;
 
-        Assert.True(
-            FolderInfoWriter.Replace(
-                path,
-                XDocument.Parse("<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" />"),
-                File.GetLastWriteTimeUtc(path)
-            )
+        FolderInfoWriter.Replace(
+            path,
+            XDocument.Parse("<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" />"),
+            File.GetLastWriteTimeUtc(path)
         );
+
+        Assert.Equal("<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" />\n", File.ReadAllText(path));
+    }
+
+    [Fact]
+    public void A_half_written_store_is_left_alone_for_a_retry()
+    {
+        _writer.Apply(_root, [Assign("a.flac", "Key|A", "Key|Minor")]);
+        File.WriteAllText(XmpPath, "<x:xmpmeta><rdf:RDF");
+
+        Assert.Throws<TagStoreChangedException>(() =>
+            _writer.Apply(_root, [Assign("b.flac", "Key|B", "Key|Minor")])
+        );
+
+        Assert.Equal("<x:xmpmeta><rdf:RDF", File.ReadAllText(XmpPath));
+    }
+
+    [Fact]
+    public void A_store_another_program_holds_throws_and_leaves_no_temporary_file()
+    {
+        _writer.Apply(_root, [Assign("a.flac", "Key|A", "Key|Minor")]);
+
+        using (new FileStream(XmpPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            Assert.Throws<IOException>(() =>
+                _writer.Apply(_root, [Assign("b.flac", "Key|B", "Key|Minor")])
+            );
+        }
+
+        Assert.Empty(Directory.EnumerateFiles(Path.Combine(_root, "Ableton Folder Info"), "*.tmp"));
+    }
+
+    [Fact]
+    public void A_rename_moves_the_entries_it_finds_and_counts_them()
+    {
+        _writer.Apply(_root, [Assign("old.flac", "Key|A", "Key|Minor")]);
+
+        var moved = _writer.Rename(
+            _root,
+            [
+                new TagRename { From = "old.flac", To = "new.flac" },
+                new TagRename { From = "absent.flac", To = "x.flac" },
+            ]
+        );
+
+        Assert.Equal(1, moved);
+        Assert.True(_reader.Read(_root).TryGet("new.flac", out var tags));
+        Assert.Equal(["Key|A", "Key|Minor"], tags.Keywords);
+    }
+
+    [Fact]
+    public void A_rename_in_a_folder_with_no_store_moves_nothing()
+    {
+        Assert.Equal(0, _writer.Rename(_root, [new TagRename { From = "a.flac", To = "b.flac" }]));
+        Assert.False(Directory.Exists(Path.Combine(_root, "Ableton Folder Info")));
     }
 
     [Theory]

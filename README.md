@@ -36,12 +36,8 @@ dotnet add package AbleKit --prerelease
 ```csharp
 using AbleKit.Analysis;
 
-var outcome = new AnalysisFileReader().Read(@"C:\Samples\Break.wav.asd");
-
-if (outcome is AnalysisReadOutcome.Read read)
+if (AnalysisFile.TryRead(@"C:\Samples\Break.wav.asd", out var analysis))
 {
-    var analysis = read.Analysis;
-
     // Null until Save Default Clip is pressed, which is also when Live writes the markers.
     var clip = analysis.DefaultClip;
 
@@ -64,16 +60,17 @@ An `AnalysisFile` holds everything in the file, in three parts named after what 
 - **`Audio`**: what Live measured in the audio: the waveform overview, the transients, and the file's
   size.
 
-`Read` never throws for a bad file. It says what happened instead:
+`TryRead` returns false when there is no file. Live writes one only once a sample has been opened,
+so for many samples there is none. A file that is there but cannot be read throws:
 
-| outcome | means |
+| exception | means |
 |---|---|
-| `Read` | the file was read; `Analysis` holds it |
-| `Missing` | there is no file. Live writes one only once a sample has been opened, so for many there is none |
-| `Failed` | the file is there but could not be opened, locked or not permitted; `Error` says which |
-| `Unrecognised` | the file is not one this library reads, cut short or laid out differently; `Reason` says where reading gave up |
+| `IOException` | another program has the file locked; trying again may help |
+| `UnauthorizedAccessException` | reading the file is not permitted |
+| `InvalidDataException` | the file is not one this library reads, cut short or laid out differently; the message says where reading gave up |
 
-`AnalysisFile.TryParse` reads bytes already in memory.
+`AnalysisFile.Read` does the same, but throws a `FileNotFoundException` when there is no file.
+`Parse` and `TryParse` read bytes already in memory.
 
 ## Change and write one
 
@@ -83,7 +80,7 @@ Change anything with `with`, then write the result to any path:
 var clip = analysis.Clip with { PitchCoarse = analysis.Clip.PitchCoarse + 1 };
 var raised = analysis with { Clip = clip };
 
-var outcome = new AnalysisFileWriter().Write(@"C:\Samples\Break (up 1).wav.asd", raised);
+raised.Write(@"C:\Samples\Break (up 1).wav.asd");
 ```
 
 - **Live pairs an analysis file with the audio file named the same**, minus `.asd`. Where you write
@@ -93,7 +90,8 @@ var outcome = new AnalysisFileWriter().Write(@"C:\Samples\Break (up 1).wav.asd",
   writer numbers them afresh, as Live does for a new warp.
 - **It refuses what Live could not have written**, such as markers out of order or an overview of the
   wrong size, with an `InvalidOperationException`, rather than leave Live to make sense of it.
-- **It writes through a temporary file moved into place**, so Live never reads half a file.
+- **It writes through a temporary file moved into place**, so Live never reads half a file. A file
+  it cannot write throws an `IOException`, and nothing is written.
 - `ToBytes()` gives the bytes without writing them.
 
 ## Write one for audio Live has not analysed
@@ -111,17 +109,20 @@ var audio = AudioAnalysis.FromSamples(
     fileSize: new FileInfo(@"C:\Samples\Song (Vocal).flac").Length
 );
 
-var writer = new AnalysisFileWriter();
-var path = @"C:\Samples\Song (Vocal).flac.asd";
+AnalysisFile stem;
 
-var sibling = new AnalysisFileReader().Read(@"C:\Samples\Song (Instrumental).flac.asd");
-
-// Warped like another stem of the same song that you have warped and saved…
-if (sibling is AnalysisReadOutcome.Read read)
-    writer.Write(path, read.Analysis with { Audio = audio });
-// …or from nothing: Live's default clip and warp, set as you like.
+if (AnalysisFile.TryRead(@"C:\Samples\Song (Instrumental).flac.asd", out var sibling))
+{
+    // Warped like another stem of the same song that you have warped and saved…
+    stem = sibling with { Audio = audio };
+}
 else
-    writer.Write(path, new AnalysisFile { Audio = audio });
+{
+    // …or from nothing: Live's default clip and warp, set as you like.
+    stem = new AnalysisFile { Audio = audio };
+}
+
+stem.Write(@"C:\Samples\Song (Vocal).flac.asd");
 ```
 
 Replacing `Audio` drops everything the sibling measured in its own audio, its transient edits
@@ -148,6 +149,10 @@ if (fromIndex.TryGet(@"C:\Samples\Drums\Kick.wav", out var tags))
     Console.WriteLine(string.Join(", ", tags.Keywords)); // Drums|Kick, Key|C♯, …
 ```
 
+A folder with no store, or one Live's index does not cover, reads as empty. A store or index that
+cannot be read throws an `IOException`. One Live was writing at that moment throws a
+`TagStoreChangedException`, which is an `IOException`; reading again fixes it.
+
 Keywords are raw, as Live writes them: `Category|Value`, or deeper for Live's nested tags
 (`Drums|Cymbal|Crash`). When the two sources disagree, the index is what Live's browser shows; the
 XMP can lag behind it, sometimes indefinitely.
@@ -167,22 +172,20 @@ var newTags = keywords.Where(keyword => !known.Contains(keyword)).ToList();
 made but put on no file is missing from it.
 
 ```csharp
-var outcome = new FolderInfoWriter().Apply(
-    folder,
-    [new TagAssignment { RelativePath = "Kick.wav", Keywords = ["Drums|Kick", "Key|C♯", "Key|Minor"] }]
-);
-
-switch (outcome)
+var kick = new TagAssignment
 {
-    case TagWriteOutcome.Written written:
-        Console.WriteLine($"Tagged {written.Applied} files.");
-        break;
-    case TagWriteOutcome.Stale:
-        Console.WriteLine("The store changed while writing; nothing was written. Try again.");
-        break;
-    case TagWriteOutcome.Rejected rejected:
-        Console.WriteLine($"Nothing was written: {rejected.Error}");
-        break;
+    RelativePath = "Kick.wav",
+    Keywords = ["Drums|Kick", "Key|C♯", "Key|Minor"],
+};
+
+try
+{
+    var applied = new FolderInfoWriter().Apply(folder, [kick]);
+    Console.WriteLine($"Files tagged: {applied}");
+}
+catch (TagStoreChangedException)
+{
+    Console.WriteLine("Live changed the store while it was being written; nothing was written. Try again.");
 }
 ```
 
@@ -191,13 +194,14 @@ What the writer does:
 - **It replaces a file's keywords** with the ones given. It does not add to them. Read the entry
   first and merge if you want to keep what is there.
 - **It leaves every other entry alone**, in its place, and never touches hidden keywords.
-- **It writes all or nothing.** A keyword that is not `Category|Value` rejects the whole write.
-  Any well-formed keyword is written, including one Live does not know yet.
-- **It refuses to overwrite a store Live changed** after it was read, and writes through a
-  temporary file swapped into place. That narrows the race with Live; it cannot close it.
+- **It writes all or nothing.** A keyword that is not `Category|Value` throws an `ArgumentException`
+  and nothing is written; `FolderInfoWriter.IsWellFormed` checks one first. Any well-formed keyword
+  is written, including one Live does not know yet.
+- **It refuses to overwrite a store Live changed** after it was read, throwing a
+  `TagStoreChangedException`, and writes through a temporary file swapped into place. That narrows the race with Live; it cannot close it.
 - **It writes bytes Live's way**: no BOM, LF line endings, three-space indents, and a new store
   under the file name Live itself uses.
-- `Rename` moves an entry to a new file name, keeping its keywords.
+- `Rename` moves entries to new file names, keeping their keywords, and returns how many it moved.
 
 It keeps no backup and has no dry run. For bulk tagging from a command line, with a dry run by
 default and optional backups, see [LiveTagger](https://github.com/17cupsofcoffee/LiveTagger).

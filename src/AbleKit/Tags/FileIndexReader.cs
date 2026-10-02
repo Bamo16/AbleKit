@@ -64,42 +64,45 @@ public sealed class FileIndexReader(string indexFolder)
         );
 
     /// <summary>
-    /// Reads what the index holds for <paramref name="folder"/>. Never throws — an absent
-    /// database, or a folder Ableton has never been shown, both read as empty.
+    /// Reads what the index holds for <paramref name="folder"/>. With no index, as before Live first
+    /// runs, or for a folder Live was never shown, there is nothing to read, and it reads as empty.
     /// </summary>
+    /// <exception cref="IOException">The index could not be read: locked, damaged, or laid out differently.</exception>
+    /// <exception cref="UnauthorizedAccessException">Reading the index is not permitted.</exception>
     public FolderInfo Read(string folder)
     {
+        if (FindDatabase() is not { } database)
+            return FolderInfo.Empty(folder);
+
         try
         {
-            if (FindDatabase() is not { } database)
-                return FolderInfo.Empty(folder);
-
             using var connection = Open(database);
 
             return PlaceFor(connection, folder) is { } place
                 ? new FolderInfo(folder, TagsUnder(connection, place))
                 : FolderInfo.Empty(folder);
         }
-        catch (Exception ex)
-            when (ex is SqliteException or IOException or UnauthorizedAccessException)
+        catch (SqliteException ex)
         {
-            return FolderInfo.Empty(folder);
+            throw Unreadable(ex);
         }
     }
 
     /// <summary>
     /// Every keyword Live knows from some file it has indexed, built-in and the user's own,
     /// compared exactly. A keyword missing from it would become a new tag. A tag the user made but
-    /// put on no file is missing too, and the index can trail Live by a few seconds. Never throws;
-    /// an absent database reads as empty.
+    /// put on no file is missing too, and the index can trail Live by a few seconds. With no index,
+    /// it is empty.
     /// </summary>
+    /// <exception cref="IOException">The index could not be read: locked, damaged, or laid out differently.</exception>
+    /// <exception cref="UnauthorizedAccessException">Reading the index is not permitted.</exception>
     public IReadOnlySet<string> ReadKnownKeywords()
     {
+        if (FindDatabase() is not { } database)
+            return new HashSet<string>();
+
         try
         {
-            if (FindDatabase() is not { } database)
-                return new HashSet<string>();
-
             using var connection = Open(database);
             using var command = connection.CreateCommand();
             command.CommandText = KnownKeywordsSql;
@@ -115,10 +118,9 @@ public sealed class FileIndexReader(string indexFolder)
 
             return keywords;
         }
-        catch (Exception ex)
-            when (ex is SqliteException or IOException or UnauthorizedAccessException)
+        catch (SqliteException ex)
         {
-            return new HashSet<string>();
+            throw Unreadable(ex);
         }
     }
 
@@ -130,6 +132,10 @@ public sealed class FileIndexReader(string indexFolder)
         Directory.Exists(indexFolder)
             ? Directory.EnumerateFiles(indexFolder, DatabasePattern).MaxBy(File.GetLastWriteTimeUtc)
             : null;
+
+    /// <summary>Callers catch an <see cref="IOException"/> without depending on SQLite.</summary>
+    private static IOException Unreadable(SqliteException ex) =>
+        new($"Live's file index could not be read: {ex.Message}", ex);
 
     /// <summary>Unpooled, since a pooled connection holds Ableton's file open after closing.</summary>
     private static SqliteConnection Open(string database)

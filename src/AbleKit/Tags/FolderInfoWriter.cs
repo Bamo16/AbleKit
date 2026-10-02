@@ -30,107 +30,86 @@ public sealed class FolderInfoWriter
     };
 
     /// <summary>
-    /// Applies keywords to files under <paramref name="folder"/>, leaving every other entry
-    /// and its position alone, or nothing at all unless every keyword is well-formed. A keyword
-    /// Live does not know yet becomes a new tag; check against
-    /// <see cref="FileIndexReader.ReadKnownKeywords"/> first to catch one made by accident.
+    /// Applies keywords to files under <paramref name="folder"/>, leaving every other entry and its
+    /// position alone, and returns how many files were given keywords. A keyword Live does not know
+    /// yet becomes a new tag; check against <see cref="FileIndexReader.ReadKnownKeywords"/> first to
+    /// catch one made by accident.
     /// </summary>
-    public TagWriteOutcome Apply(string folder, IReadOnlyList<TagAssignment> assignments)
+    /// <exception cref="ArgumentException">
+    /// A keyword is not well-formed (see <see cref="IsWellFormed"/>). Nothing is written.
+    /// </exception>
+    /// <exception cref="TagStoreChangedException">
+    /// Live was writing the store, or changed it after it was read. Nothing is written; try again.
+    /// </exception>
+    /// <exception cref="IOException">The store is locked by another program. Nothing is written.</exception>
+    /// <exception cref="UnauthorizedAccessException">Writing there is not permitted. Nothing is written.</exception>
+    public int Apply(string folder, IReadOnlyList<TagAssignment> assignments)
     {
         if (assignments.Count is 0)
-            return new TagWriteOutcome.Written(0);
+            return 0;
 
         if (
             assignments.SelectMany(a => a.Keywords).FirstOrDefault(k => !IsWellFormed(k)) is { } bad
         )
-            return new TagWriteOutcome.Rejected($"'{bad}' is not a Category|Value keyword");
+            throw new ArgumentException(
+                $"'{bad}' is not a Category|Value keyword",
+                nameof(assignments)
+            );
 
         var directory = Path.Combine(folder, FolderInfoFile.Directory);
         var path = ExistingXmp(folder);
 
-        try
-        {
-            Directory.CreateDirectory(directory);
+        Directory.CreateDirectory(directory);
 
-            var stamp = path is not null ? File.GetLastWriteTimeUtc(path) : (DateTime?)null;
-            var document = path is not null ? Load(path) : NewDocument();
+        var stamp = path is not null ? File.GetLastWriteTimeUtc(path) : (DateTime?)null;
+        var document = path is not null ? FolderInfoFile.Load(path) : NewDocument();
+        var items = Items(document);
 
-            if (document is null)
-                return new TagWriteOutcome.Stale(
-                    "the tag store was mid-write and could not be read"
-                );
+        foreach (var assignment in assignments)
+            ApplyOne(items, assignment);
 
-            var items = Items(document);
+        Stamp(document);
+        Replace(path ?? Path.Combine(directory, FolderInfoFile.StoreName), document, stamp);
 
-            foreach (var assignment in assignments)
-                ApplyOne(items, assignment);
-
-            Stamp(document);
-
-            return Replace(
-                path ?? Path.Combine(directory, FolderInfoFile.StoreName),
-                document,
-                stamp
-            )
-                ? new TagWriteOutcome.Written(assignments.Count)
-                : new TagWriteOutcome.Stale("the tag store changed while it was being updated");
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return new TagWriteOutcome.Stale(ex.Message);
-        }
+        return assignments.Count;
     }
 
     /// <summary>
-    /// Points existing entries at new file names, keeping their keywords and their position.
+    /// Points existing entries at new file names, keeping their keywords and their position, and
+    /// returns how many were renamed. An entry not in the store, or a folder with no store, is passed over.
     /// </summary>
-    public TagWriteOutcome Rename(string folder, IReadOnlyList<TagRename> renames)
+    /// <exception cref="TagStoreChangedException">
+    /// Live was writing the store, or changed it after it was read. Nothing is written; try again.
+    /// </exception>
+    /// <exception cref="IOException">The store is locked by another program. Nothing is written.</exception>
+    /// <exception cref="UnauthorizedAccessException">Writing there is not permitted. Nothing is written.</exception>
+    public int Rename(string folder, IReadOnlyList<TagRename> renames)
     {
-        if (renames.Count is 0)
-            return new TagWriteOutcome.Written(0);
+        if (renames.Count is 0 || ExistingXmp(folder) is not { } path)
+            return 0;
 
-        var path = ExistingXmp(folder);
+        var stamp = File.GetLastWriteTimeUtc(path);
+        var document = FolderInfoFile.Load(path);
+        var items = Items(document);
 
-        // No store yet is not a failure — nothing carries the old names to rename.
-        if (path is null)
-            return new TagWriteOutcome.Written(0);
+        var moved = 0;
 
-        try
+        foreach (var rename in renames)
         {
-            var stamp = File.GetLastWriteTimeUtc(path);
-            var document = Load(path);
+            if (Find(items, rename.From)?.Element(AblFr + "filePath") is not { } filePath)
+                continue;
 
-            if (document is null)
-                return new TagWriteOutcome.Stale(
-                    "the tag store was mid-write and could not be read"
-                );
-
-            var items = Items(document);
-
-            var moved = 0;
-
-            foreach (var rename in renames)
-            {
-                if (Find(items, rename.From)?.Element(AblFr + "filePath") is not { } filePath)
-                    continue;
-
-                filePath.Value = rename.To;
-                moved++;
-            }
-
-            if (moved is 0)
-                return new TagWriteOutcome.Written(0);
-
-            Stamp(document);
-
-            return Replace(path, document, stamp)
-                ? new TagWriteOutcome.Written(moved)
-                : new TagWriteOutcome.Stale("the tag store changed while it was being updated");
+            filePath.Value = rename.To;
+            moved++;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return new TagWriteOutcome.Stale(ex.Message);
-        }
+
+        if (moved is 0)
+            return 0;
+
+        Stamp(document);
+        Replace(path, document, stamp);
+
+        return moved;
     }
 
     /// <summary>
@@ -143,32 +122,11 @@ public sealed class FolderInfoWriter
         && parts.All(part => part.Length > 0 && part.Trim() == part);
 
     /// <summary>
-    /// Reads the file, or null if Ableton is mid-write — which calls for a retry, never a rebuild.
-    /// </summary>
-    private static XDocument? Load(string path)
-    {
-        try
-        {
-            using var stream = new FileStream(
-                path,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.ReadWrite | FileShare.Delete
-            );
-
-            return XDocument.Load(stream);
-        }
-        catch (Exception ex) when (ex is IOException or XmlException)
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
     /// Writes to a temporary file beside the target and swaps it in, but only if nothing has
     /// touched the target since it was read. Narrows the race with Ableton; does not close it.
     /// </summary>
-    internal static bool Replace(string path, XDocument document, DateTime? stamp)
+    /// <exception cref="TagStoreChangedException">The target changed after it was read.</exception>
+    internal static void Replace(string path, XDocument document, DateTime? stamp)
     {
         // Beside the target: a replace across volumes is not atomic.
         var temporary = $"{path}.tmp";
@@ -188,15 +146,22 @@ public sealed class FolderInfoWriter
         {
             File.Delete(temporary);
 
-            return false;
+            throw new TagStoreChangedException("The tag store changed while it was being updated.");
         }
 
-        if (File.Exists(path))
-            File.Replace(temporary, path, destinationBackupFileName: null);
-        else
-            File.Move(temporary, path);
+        try
+        {
+            if (File.Exists(path))
+                File.Replace(temporary, path, destinationBackupFileName: null);
+            else
+                File.Move(temporary, path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            File.Delete(temporary);
 
-        return true;
+            throw;
+        }
     }
 
     private static void ApplyOne(XElement items, TagAssignment assignment)
@@ -299,24 +264,4 @@ public sealed record TagRename
 
     /// <summary>The name it moves to.</summary>
     public required string To { get; init; }
-}
-
-/// <summary>How one write turned out: <see cref="Written"/>, <see cref="Stale"/> or <see cref="Rejected"/>.</summary>
-public abstract record TagWriteOutcome
-{
-    private TagWriteOutcome() { }
-
-    /// <summary>The store was written, or needed no change.</summary>
-    /// <param name="Applied">How many files were given keywords, or renamed.</param>
-    public sealed record Written(int Applied) : TagWriteOutcome;
-
-    /// <summary>
-    /// Nothing was wrong with the request; the store moved underneath it. Trying again fixes it.
-    /// </summary>
-    /// <param name="Error">What moved.</param>
-    public sealed record Stale(string Error) : TagWriteOutcome;
-
-    /// <summary>The request itself was wrong, so trying again will not fix it.</summary>
-    /// <param name="Error">What was wrong with it.</param>
-    public sealed record Rejected(string Error) : TagWriteOutcome;
 }

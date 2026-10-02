@@ -13,49 +13,7 @@ AbleKit.Analysis.AnalysisFile.IsDefaultClipSaved.init -> void
 AbleKit.Analysis.AnalysisFile.ToBytes() -> byte[]!
 AbleKit.Analysis.AnalysisFile.Warp.get -> AbleKit.Analysis.Warp!
 AbleKit.Analysis.AnalysisFile.Warp.init -> void
-AbleKit.Analysis.AnalysisFileReader
-AbleKit.Analysis.AnalysisFileReader.AnalysisFileReader() -> void
-AbleKit.Analysis.AnalysisFileReader.Read(string! path) -> AbleKit.Analysis.AnalysisReadOutcome!
-AbleKit.Analysis.AnalysisFileWriter
-AbleKit.Analysis.AnalysisFileWriter.AnalysisFileWriter() -> void
-AbleKit.Analysis.AnalysisFileWriter.Write(string! path, AbleKit.Analysis.AnalysisFile! analysis) -> AbleKit.Analysis.AnalysisWriteOutcome!
-AbleKit.Analysis.AnalysisReadOutcome
-AbleKit.Analysis.AnalysisReadOutcome.AnalysisReadOutcome(AbleKit.Analysis.AnalysisReadOutcome! original) -> void
-AbleKit.Analysis.AnalysisReadOutcome.Failed
-AbleKit.Analysis.AnalysisReadOutcome.Failed.Deconstruct(out string! Error) -> void
-AbleKit.Analysis.AnalysisReadOutcome.Failed.Equals(AbleKit.Analysis.AnalysisReadOutcome.Failed? other) -> bool
-AbleKit.Analysis.AnalysisReadOutcome.Failed.Error.get -> string!
-AbleKit.Analysis.AnalysisReadOutcome.Failed.Error.init -> void
-AbleKit.Analysis.AnalysisReadOutcome.Failed.Failed(string! Error) -> void
-AbleKit.Analysis.AnalysisReadOutcome.Missing
-AbleKit.Analysis.AnalysisReadOutcome.Missing.Equals(AbleKit.Analysis.AnalysisReadOutcome.Missing? other) -> bool
-AbleKit.Analysis.AnalysisReadOutcome.Missing.Missing() -> void
-AbleKit.Analysis.AnalysisReadOutcome.Read
-AbleKit.Analysis.AnalysisReadOutcome.Read.Analysis.get -> AbleKit.Analysis.AnalysisFile!
-AbleKit.Analysis.AnalysisReadOutcome.Read.Analysis.init -> void
-AbleKit.Analysis.AnalysisReadOutcome.Read.Deconstruct(out AbleKit.Analysis.AnalysisFile! Analysis) -> void
-AbleKit.Analysis.AnalysisReadOutcome.Read.Equals(AbleKit.Analysis.AnalysisReadOutcome.Read? other) -> bool
-AbleKit.Analysis.AnalysisReadOutcome.Read.Read(AbleKit.Analysis.AnalysisFile! Analysis) -> void
-AbleKit.Analysis.AnalysisReadOutcome.Unrecognised
-AbleKit.Analysis.AnalysisReadOutcome.Unrecognised.Deconstruct(out string! Reason) -> void
-AbleKit.Analysis.AnalysisReadOutcome.Unrecognised.Equals(AbleKit.Analysis.AnalysisReadOutcome.Unrecognised? other) -> bool
-AbleKit.Analysis.AnalysisReadOutcome.Unrecognised.Reason.get -> string!
-AbleKit.Analysis.AnalysisReadOutcome.Unrecognised.Reason.init -> void
-AbleKit.Analysis.AnalysisReadOutcome.Unrecognised.Unrecognised(string! Reason) -> void
-AbleKit.Analysis.AnalysisWriteOutcome
-AbleKit.Analysis.AnalysisWriteOutcome.AnalysisWriteOutcome(AbleKit.Analysis.AnalysisWriteOutcome! original) -> void
-AbleKit.Analysis.AnalysisWriteOutcome.Failed
-AbleKit.Analysis.AnalysisWriteOutcome.Failed.Deconstruct(out string! Error) -> void
-AbleKit.Analysis.AnalysisWriteOutcome.Failed.Equals(AbleKit.Analysis.AnalysisWriteOutcome.Failed? other) -> bool
-AbleKit.Analysis.AnalysisWriteOutcome.Failed.Error.get -> string!
-AbleKit.Analysis.AnalysisWriteOutcome.Failed.Error.init -> void
-AbleKit.Analysis.AnalysisWriteOutcome.Failed.Failed(string! Error) -> void
-AbleKit.Analysis.AnalysisWriteOutcome.Written
-AbleKit.Analysis.AnalysisWriteOutcome.Written.Deconstruct(out string! Path) -> void
-AbleKit.Analysis.AnalysisWriteOutcome.Written.Equals(AbleKit.Analysis.AnalysisWriteOutcome.Written? other) -> bool
-AbleKit.Analysis.AnalysisWriteOutcome.Written.Path.get -> string!
-AbleKit.Analysis.AnalysisWriteOutcome.Written.Path.init -> void
-AbleKit.Analysis.AnalysisWriteOutcome.Written.Written(string! Path) -> void
+AbleKit.Analysis.AnalysisFile.Write(string! path) -> void
 AbleKit.Analysis.AudioAnalysis
 AbleKit.Analysis.AudioAnalysis.<Clone>$() -> AbleKit.Analysis.AudioAnalysis!
 AbleKit.Analysis.AudioAnalysis.AudioAnalysis() -> void
@@ -279,9 +237,9 @@ AbleKit.Tags.FolderInfoReader
 AbleKit.Tags.FolderInfoReader.FolderInfoReader() -> void
 AbleKit.Tags.FolderInfoReader.Read(string! folder) -> AbleKit.Tags.FolderInfo!
 AbleKit.Tags.FolderInfoWriter
-AbleKit.Tags.FolderInfoWriter.Apply(string! folder, System.Collections.Generic.IReadOnlyList<AbleKit.Tags.TagAssignment!>! assignments) -> AbleKit.Tags.TagWriteOutcome!
+AbleKit.Tags.FolderInfoWriter.Apply(string! folder, System.Collections.Generic.IReadOnlyList<AbleKit.Tags.TagAssignment!>! assignments) -> int
 AbleKit.Tags.FolderInfoWriter.FolderInfoWriter() -> void
-AbleKit.Tags.FolderInfoWriter.Rename(string! folder, System.Collections.Generic.IReadOnlyList<AbleKit.Tags.TagRename!>! renames) -> AbleKit.Tags.TagWriteOutcome!
+AbleKit.Tags.FolderInfoWriter.Rename(string! folder, System.Collections.Generic.IReadOnlyList<AbleKit.Tags.TagRename!>! renames) -> int
 AbleKit.Tags.KeyTags
 AbleKit.Tags.TagAssignment
 AbleKit.Tags.TagAssignment.<Clone>$() -> AbleKit.Tags.TagAssignment!
@@ -299,62 +257,13 @@ AbleKit.Tags.TagRename.From.init -> void
 AbleKit.Tags.TagRename.TagRename() -> void
 AbleKit.Tags.TagRename.To.get -> string!
 AbleKit.Tags.TagRename.To.init -> void
-AbleKit.Tags.TagWriteOutcome
-AbleKit.Tags.TagWriteOutcome.Rejected
-AbleKit.Tags.TagWriteOutcome.Rejected.Deconstruct(out string! Error) -> void
-AbleKit.Tags.TagWriteOutcome.Rejected.Equals(AbleKit.Tags.TagWriteOutcome.Rejected? other) -> bool
-AbleKit.Tags.TagWriteOutcome.Rejected.Error.get -> string!
-AbleKit.Tags.TagWriteOutcome.Rejected.Error.init -> void
-AbleKit.Tags.TagWriteOutcome.Rejected.Rejected(string! Error) -> void
-AbleKit.Tags.TagWriteOutcome.Stale
-AbleKit.Tags.TagWriteOutcome.Stale.Deconstruct(out string! Error) -> void
-AbleKit.Tags.TagWriteOutcome.Stale.Equals(AbleKit.Tags.TagWriteOutcome.Stale? other) -> bool
-AbleKit.Tags.TagWriteOutcome.Stale.Error.get -> string!
-AbleKit.Tags.TagWriteOutcome.Stale.Error.init -> void
-AbleKit.Tags.TagWriteOutcome.Stale.Stale(string! Error) -> void
-AbleKit.Tags.TagWriteOutcome.TagWriteOutcome(AbleKit.Tags.TagWriteOutcome! original) -> void
-AbleKit.Tags.TagWriteOutcome.Written
-AbleKit.Tags.TagWriteOutcome.Written.Applied.get -> int
-AbleKit.Tags.TagWriteOutcome.Written.Applied.init -> void
-AbleKit.Tags.TagWriteOutcome.Written.Deconstruct(out int Applied) -> void
-AbleKit.Tags.TagWriteOutcome.Written.Equals(AbleKit.Tags.TagWriteOutcome.Written? other) -> bool
-AbleKit.Tags.TagWriteOutcome.Written.Written(int Applied) -> void
-abstract AbleKit.Analysis.AnalysisReadOutcome.<Clone>$() -> AbleKit.Analysis.AnalysisReadOutcome!
-abstract AbleKit.Analysis.AnalysisWriteOutcome.<Clone>$() -> AbleKit.Analysis.AnalysisWriteOutcome!
-abstract AbleKit.Tags.TagWriteOutcome.<Clone>$() -> AbleKit.Tags.TagWriteOutcome!
+AbleKit.Tags.TagStoreChangedException
+AbleKit.Tags.TagStoreChangedException.TagStoreChangedException() -> void
+AbleKit.Tags.TagStoreChangedException.TagStoreChangedException(string! message) -> void
+AbleKit.Tags.TagStoreChangedException.TagStoreChangedException(string! message, System.Exception! innerException) -> void
 override AbleKit.Analysis.AnalysisFile.Equals(object? obj) -> bool
 override AbleKit.Analysis.AnalysisFile.GetHashCode() -> int
 override AbleKit.Analysis.AnalysisFile.ToString() -> string!
-override AbleKit.Analysis.AnalysisReadOutcome.Equals(object? obj) -> bool
-override AbleKit.Analysis.AnalysisReadOutcome.Failed.<Clone>$() -> AbleKit.Analysis.AnalysisReadOutcome.Failed!
-override AbleKit.Analysis.AnalysisReadOutcome.Failed.Equals(object? obj) -> bool
-override AbleKit.Analysis.AnalysisReadOutcome.Failed.GetHashCode() -> int
-override AbleKit.Analysis.AnalysisReadOutcome.Failed.ToString() -> string!
-override AbleKit.Analysis.AnalysisReadOutcome.GetHashCode() -> int
-override AbleKit.Analysis.AnalysisReadOutcome.Missing.<Clone>$() -> AbleKit.Analysis.AnalysisReadOutcome.Missing!
-override AbleKit.Analysis.AnalysisReadOutcome.Missing.Equals(object? obj) -> bool
-override AbleKit.Analysis.AnalysisReadOutcome.Missing.GetHashCode() -> int
-override AbleKit.Analysis.AnalysisReadOutcome.Missing.ToString() -> string!
-override AbleKit.Analysis.AnalysisReadOutcome.Read.<Clone>$() -> AbleKit.Analysis.AnalysisReadOutcome.Read!
-override AbleKit.Analysis.AnalysisReadOutcome.Read.Equals(object? obj) -> bool
-override AbleKit.Analysis.AnalysisReadOutcome.Read.GetHashCode() -> int
-override AbleKit.Analysis.AnalysisReadOutcome.Read.ToString() -> string!
-override AbleKit.Analysis.AnalysisReadOutcome.ToString() -> string!
-override AbleKit.Analysis.AnalysisReadOutcome.Unrecognised.<Clone>$() -> AbleKit.Analysis.AnalysisReadOutcome.Unrecognised!
-override AbleKit.Analysis.AnalysisReadOutcome.Unrecognised.Equals(object? obj) -> bool
-override AbleKit.Analysis.AnalysisReadOutcome.Unrecognised.GetHashCode() -> int
-override AbleKit.Analysis.AnalysisReadOutcome.Unrecognised.ToString() -> string!
-override AbleKit.Analysis.AnalysisWriteOutcome.Equals(object? obj) -> bool
-override AbleKit.Analysis.AnalysisWriteOutcome.Failed.<Clone>$() -> AbleKit.Analysis.AnalysisWriteOutcome.Failed!
-override AbleKit.Analysis.AnalysisWriteOutcome.Failed.Equals(object? obj) -> bool
-override AbleKit.Analysis.AnalysisWriteOutcome.Failed.GetHashCode() -> int
-override AbleKit.Analysis.AnalysisWriteOutcome.Failed.ToString() -> string!
-override AbleKit.Analysis.AnalysisWriteOutcome.GetHashCode() -> int
-override AbleKit.Analysis.AnalysisWriteOutcome.ToString() -> string!
-override AbleKit.Analysis.AnalysisWriteOutcome.Written.<Clone>$() -> AbleKit.Analysis.AnalysisWriteOutcome.Written!
-override AbleKit.Analysis.AnalysisWriteOutcome.Written.Equals(object? obj) -> bool
-override AbleKit.Analysis.AnalysisWriteOutcome.Written.GetHashCode() -> int
-override AbleKit.Analysis.AnalysisWriteOutcome.Written.ToString() -> string!
 override AbleKit.Analysis.AudioAnalysis.Equals(object? obj) -> bool
 override AbleKit.Analysis.AudioAnalysis.GetHashCode() -> int
 override AbleKit.Analysis.AudioAnalysis.ToString() -> string!
@@ -395,49 +304,12 @@ override AbleKit.Tags.TagAssignment.ToString() -> string!
 override AbleKit.Tags.TagRename.Equals(object? obj) -> bool
 override AbleKit.Tags.TagRename.GetHashCode() -> int
 override AbleKit.Tags.TagRename.ToString() -> string!
-override AbleKit.Tags.TagWriteOutcome.Equals(object? obj) -> bool
-override AbleKit.Tags.TagWriteOutcome.GetHashCode() -> int
-override AbleKit.Tags.TagWriteOutcome.Rejected.<Clone>$() -> AbleKit.Tags.TagWriteOutcome.Rejected!
-override AbleKit.Tags.TagWriteOutcome.Rejected.Equals(object? obj) -> bool
-override AbleKit.Tags.TagWriteOutcome.Rejected.GetHashCode() -> int
-override AbleKit.Tags.TagWriteOutcome.Rejected.ToString() -> string!
-override AbleKit.Tags.TagWriteOutcome.Stale.<Clone>$() -> AbleKit.Tags.TagWriteOutcome.Stale!
-override AbleKit.Tags.TagWriteOutcome.Stale.Equals(object? obj) -> bool
-override AbleKit.Tags.TagWriteOutcome.Stale.GetHashCode() -> int
-override AbleKit.Tags.TagWriteOutcome.Stale.ToString() -> string!
-override AbleKit.Tags.TagWriteOutcome.ToString() -> string!
-override AbleKit.Tags.TagWriteOutcome.Written.<Clone>$() -> AbleKit.Tags.TagWriteOutcome.Written!
-override AbleKit.Tags.TagWriteOutcome.Written.Equals(object? obj) -> bool
-override AbleKit.Tags.TagWriteOutcome.Written.GetHashCode() -> int
-override AbleKit.Tags.TagWriteOutcome.Written.ToString() -> string!
-override sealed AbleKit.Analysis.AnalysisReadOutcome.Failed.Equals(AbleKit.Analysis.AnalysisReadOutcome? other) -> bool
-override sealed AbleKit.Analysis.AnalysisReadOutcome.Missing.Equals(AbleKit.Analysis.AnalysisReadOutcome? other) -> bool
-override sealed AbleKit.Analysis.AnalysisReadOutcome.Read.Equals(AbleKit.Analysis.AnalysisReadOutcome? other) -> bool
-override sealed AbleKit.Analysis.AnalysisReadOutcome.Unrecognised.Equals(AbleKit.Analysis.AnalysisReadOutcome? other) -> bool
-override sealed AbleKit.Analysis.AnalysisWriteOutcome.Failed.Equals(AbleKit.Analysis.AnalysisWriteOutcome? other) -> bool
-override sealed AbleKit.Analysis.AnalysisWriteOutcome.Written.Equals(AbleKit.Analysis.AnalysisWriteOutcome? other) -> bool
-override sealed AbleKit.Tags.TagWriteOutcome.Rejected.Equals(AbleKit.Tags.TagWriteOutcome? other) -> bool
-override sealed AbleKit.Tags.TagWriteOutcome.Stale.Equals(AbleKit.Tags.TagWriteOutcome? other) -> bool
-override sealed AbleKit.Tags.TagWriteOutcome.Written.Equals(AbleKit.Tags.TagWriteOutcome? other) -> bool
+static AbleKit.Analysis.AnalysisFile.Parse(System.ReadOnlySpan<byte> asd) -> AbleKit.Analysis.AnalysisFile!
+static AbleKit.Analysis.AnalysisFile.Read(string! path) -> AbleKit.Analysis.AnalysisFile!
 static AbleKit.Analysis.AnalysisFile.TryParse(System.ReadOnlySpan<byte> asd, out AbleKit.Analysis.AnalysisFile? analysis) -> bool
+static AbleKit.Analysis.AnalysisFile.TryRead(string! path, out AbleKit.Analysis.AnalysisFile? analysis) -> bool
 static AbleKit.Analysis.AnalysisFile.operator !=(AbleKit.Analysis.AnalysisFile? left, AbleKit.Analysis.AnalysisFile? right) -> bool
 static AbleKit.Analysis.AnalysisFile.operator ==(AbleKit.Analysis.AnalysisFile? left, AbleKit.Analysis.AnalysisFile? right) -> bool
-static AbleKit.Analysis.AnalysisReadOutcome.Failed.operator !=(AbleKit.Analysis.AnalysisReadOutcome.Failed? left, AbleKit.Analysis.AnalysisReadOutcome.Failed? right) -> bool
-static AbleKit.Analysis.AnalysisReadOutcome.Failed.operator ==(AbleKit.Analysis.AnalysisReadOutcome.Failed? left, AbleKit.Analysis.AnalysisReadOutcome.Failed? right) -> bool
-static AbleKit.Analysis.AnalysisReadOutcome.Missing.operator !=(AbleKit.Analysis.AnalysisReadOutcome.Missing? left, AbleKit.Analysis.AnalysisReadOutcome.Missing? right) -> bool
-static AbleKit.Analysis.AnalysisReadOutcome.Missing.operator ==(AbleKit.Analysis.AnalysisReadOutcome.Missing? left, AbleKit.Analysis.AnalysisReadOutcome.Missing? right) -> bool
-static AbleKit.Analysis.AnalysisReadOutcome.Read.operator !=(AbleKit.Analysis.AnalysisReadOutcome.Read? left, AbleKit.Analysis.AnalysisReadOutcome.Read? right) -> bool
-static AbleKit.Analysis.AnalysisReadOutcome.Read.operator ==(AbleKit.Analysis.AnalysisReadOutcome.Read? left, AbleKit.Analysis.AnalysisReadOutcome.Read? right) -> bool
-static AbleKit.Analysis.AnalysisReadOutcome.Unrecognised.operator !=(AbleKit.Analysis.AnalysisReadOutcome.Unrecognised? left, AbleKit.Analysis.AnalysisReadOutcome.Unrecognised? right) -> bool
-static AbleKit.Analysis.AnalysisReadOutcome.Unrecognised.operator ==(AbleKit.Analysis.AnalysisReadOutcome.Unrecognised? left, AbleKit.Analysis.AnalysisReadOutcome.Unrecognised? right) -> bool
-static AbleKit.Analysis.AnalysisReadOutcome.operator !=(AbleKit.Analysis.AnalysisReadOutcome? left, AbleKit.Analysis.AnalysisReadOutcome? right) -> bool
-static AbleKit.Analysis.AnalysisReadOutcome.operator ==(AbleKit.Analysis.AnalysisReadOutcome? left, AbleKit.Analysis.AnalysisReadOutcome? right) -> bool
-static AbleKit.Analysis.AnalysisWriteOutcome.Failed.operator !=(AbleKit.Analysis.AnalysisWriteOutcome.Failed? left, AbleKit.Analysis.AnalysisWriteOutcome.Failed? right) -> bool
-static AbleKit.Analysis.AnalysisWriteOutcome.Failed.operator ==(AbleKit.Analysis.AnalysisWriteOutcome.Failed? left, AbleKit.Analysis.AnalysisWriteOutcome.Failed? right) -> bool
-static AbleKit.Analysis.AnalysisWriteOutcome.Written.operator !=(AbleKit.Analysis.AnalysisWriteOutcome.Written? left, AbleKit.Analysis.AnalysisWriteOutcome.Written? right) -> bool
-static AbleKit.Analysis.AnalysisWriteOutcome.Written.operator ==(AbleKit.Analysis.AnalysisWriteOutcome.Written? left, AbleKit.Analysis.AnalysisWriteOutcome.Written? right) -> bool
-static AbleKit.Analysis.AnalysisWriteOutcome.operator !=(AbleKit.Analysis.AnalysisWriteOutcome? left, AbleKit.Analysis.AnalysisWriteOutcome? right) -> bool
-static AbleKit.Analysis.AnalysisWriteOutcome.operator ==(AbleKit.Analysis.AnalysisWriteOutcome? left, AbleKit.Analysis.AnalysisWriteOutcome? right) -> bool
 static AbleKit.Analysis.AudioAnalysis.FromSamples(System.ReadOnlySpan<float> samples, int channelCount, System.Collections.Generic.IReadOnlyList<AbleKit.Analysis.Transient>! transients, long fileSize) -> AbleKit.Analysis.AudioAnalysis!
 static AbleKit.Analysis.AudioAnalysis.operator !=(AbleKit.Analysis.AudioAnalysis? left, AbleKit.Analysis.AudioAnalysis? right) -> bool
 static AbleKit.Analysis.AudioAnalysis.operator ==(AbleKit.Analysis.AudioAnalysis? left, AbleKit.Analysis.AudioAnalysis? right) -> bool
@@ -475,25 +347,8 @@ static AbleKit.Tags.TagAssignment.operator !=(AbleKit.Tags.TagAssignment? left, 
 static AbleKit.Tags.TagAssignment.operator ==(AbleKit.Tags.TagAssignment? left, AbleKit.Tags.TagAssignment? right) -> bool
 static AbleKit.Tags.TagRename.operator !=(AbleKit.Tags.TagRename? left, AbleKit.Tags.TagRename? right) -> bool
 static AbleKit.Tags.TagRename.operator ==(AbleKit.Tags.TagRename? left, AbleKit.Tags.TagRename? right) -> bool
-static AbleKit.Tags.TagWriteOutcome.Rejected.operator !=(AbleKit.Tags.TagWriteOutcome.Rejected? left, AbleKit.Tags.TagWriteOutcome.Rejected? right) -> bool
-static AbleKit.Tags.TagWriteOutcome.Rejected.operator ==(AbleKit.Tags.TagWriteOutcome.Rejected? left, AbleKit.Tags.TagWriteOutcome.Rejected? right) -> bool
-static AbleKit.Tags.TagWriteOutcome.Stale.operator !=(AbleKit.Tags.TagWriteOutcome.Stale? left, AbleKit.Tags.TagWriteOutcome.Stale? right) -> bool
-static AbleKit.Tags.TagWriteOutcome.Stale.operator ==(AbleKit.Tags.TagWriteOutcome.Stale? left, AbleKit.Tags.TagWriteOutcome.Stale? right) -> bool
-static AbleKit.Tags.TagWriteOutcome.Written.operator !=(AbleKit.Tags.TagWriteOutcome.Written? left, AbleKit.Tags.TagWriteOutcome.Written? right) -> bool
-static AbleKit.Tags.TagWriteOutcome.Written.operator ==(AbleKit.Tags.TagWriteOutcome.Written? left, AbleKit.Tags.TagWriteOutcome.Written? right) -> bool
-static AbleKit.Tags.TagWriteOutcome.operator !=(AbleKit.Tags.TagWriteOutcome? left, AbleKit.Tags.TagWriteOutcome? right) -> bool
-static AbleKit.Tags.TagWriteOutcome.operator ==(AbleKit.Tags.TagWriteOutcome? left, AbleKit.Tags.TagWriteOutcome? right) -> bool
 static readonly AbleKit.Tags.KeyTags.Modes -> System.Collections.Generic.IReadOnlySet<string!>!
 static readonly AbleKit.Tags.KeyTags.Tonics -> System.Collections.Generic.IReadOnlySet<string!>!
-virtual AbleKit.Analysis.AnalysisReadOutcome.EqualityContract.get -> System.Type!
-virtual AbleKit.Analysis.AnalysisReadOutcome.Equals(AbleKit.Analysis.AnalysisReadOutcome? other) -> bool
-virtual AbleKit.Analysis.AnalysisReadOutcome.PrintMembers(System.Text.StringBuilder! builder) -> bool
-virtual AbleKit.Analysis.AnalysisWriteOutcome.EqualityContract.get -> System.Type!
-virtual AbleKit.Analysis.AnalysisWriteOutcome.Equals(AbleKit.Analysis.AnalysisWriteOutcome? other) -> bool
-virtual AbleKit.Analysis.AnalysisWriteOutcome.PrintMembers(System.Text.StringBuilder! builder) -> bool
-virtual AbleKit.Tags.TagWriteOutcome.EqualityContract.get -> System.Type!
-virtual AbleKit.Tags.TagWriteOutcome.Equals(AbleKit.Tags.TagWriteOutcome? other) -> bool
-virtual AbleKit.Tags.TagWriteOutcome.PrintMembers(System.Text.StringBuilder! builder) -> bool
 ~override AbleKit.Analysis.TimeSignature.Equals(object obj) -> bool
 ~override AbleKit.Analysis.TimeSignature.ToString() -> string
 ~override AbleKit.Analysis.Transient.Equals(object obj) -> bool

@@ -12,10 +12,7 @@ public sealed class AnalysisFileRealLibraryTests
                 .SelectMany(folder =>
                     Directory.EnumerateFiles(folder, "*.asd", SearchOption.AllDirectories)
                 )
-                .Select(file => new Sidecar(
-                    Path.GetFileName(file),
-                    new AnalysisFileReader().Read(file)
-                )),
+                .Select(Load),
         ]
     );
 
@@ -23,8 +20,8 @@ public sealed class AnalysisFileRealLibraryTests
     public void Every_sidecar_in_the_library_parses()
     {
         var unreadable = Sidecars()
-            .Where(s => s.Outcome is not AnalysisReadOutcome.Read)
-            .Select(s => $"{s.File}: {s.Outcome}")
+            .Where(s => s.Error is not null)
+            .Select(s => $"{s.File}: {s.Error}")
             .ToList();
 
         Assert.Empty(unreadable);
@@ -156,10 +153,23 @@ public sealed class AnalysisFileRealLibraryTests
     private static IEnumerable<(string File, AnalysisFile Analysis)> Warps() =>
         Sidecars()
             .Select(s =>
-                s.Outcome is AnalysisReadOutcome.Read read
-                    ? (s.File, read.Analysis)
-                    : throw new InvalidOperationException($"{s.File} did not read: {s.Outcome}")
+                s.Analysis is { } analysis
+                    ? (s.File, analysis)
+                    : throw new InvalidOperationException($"{s.File} did not read: {s.Error}")
             );
 
-    private sealed record Sidecar(string File, AnalysisReadOutcome Outcome);
+    private static Sidecar Load(string file)
+    {
+        try
+        {
+            return new Sidecar(Path.GetFileName(file), AnalysisFile.Read(file), null);
+        }
+        catch (Exception ex)
+            when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            return new Sidecar(Path.GetFileName(file), null, ex.Message);
+        }
+    }
+
+    private sealed record Sidecar(string File, AnalysisFile? Analysis, string? Error);
 }

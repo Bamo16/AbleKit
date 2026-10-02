@@ -17,7 +17,7 @@ public sealed class FolderInfo(string folder, IReadOnlyList<FileTags> entries)
     /// <summary>Every entry, in document order.</summary>
     public IReadOnlyList<FileTags> Entries { get; } = entries;
 
-    /// <summary>What an unreadable or absent index yields.</summary>
+    /// <summary>No entries: what a folder with no store, or one Live's index does not cover, reads as.</summary>
     public static FolderInfo Empty(string folder) => new(folder, []);
 
     /// <summary>

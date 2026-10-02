@@ -98,6 +98,17 @@ public sealed class FileIndexReaderTests : IDisposable
     }
 
     [Fact]
+    public void An_index_that_is_not_a_database_throws_an_IOException()
+    {
+        System.IO.File.WriteAllText(Path.Combine(_index, "Live-files-12300.db"), "not a database");
+
+        var reader = new FileIndexReader(_index);
+
+        Assert.Throws<IOException>(() => reader.Read(_root));
+        Assert.Throws<IOException>(reader.ReadKnownKeywords);
+    }
+
+    [Fact]
     public void A_folder_Live_was_never_shown_reads_empty()
     {
         using (var db = Create("Live-files-12300.db"))

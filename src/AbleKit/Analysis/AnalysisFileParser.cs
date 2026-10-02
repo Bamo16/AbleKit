@@ -35,18 +35,28 @@ internal static class AnalysisFileParser
     private static readonly byte[] HeadTrailerStart = [0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0];
     private static readonly byte[] SampleDataTag = [0x00, 0x0A, .. "SampleData"u8];
 
-    /// <summary>The file read, or why it was not recognised.</summary>
-    internal static AnalysisReadOutcome Parse(ReadOnlySpan<byte> asd)
+    /// <summary>Reads the file, or says why it is not one this library recognises.</summary>
+    internal static bool TryParse(
+        ReadOnlySpan<byte> asd,
+        [NotNullWhen(true)] out AnalysisFile? analysis,
+        [NotNullWhen(false)] out string? reason
+    )
     {
+        analysis = null;
+
         if (!TryReadSchema(asd, out var types, out var sampleData, out var instance))
-            return new AnalysisReadOutcome.Unrecognised(
-                "there is no SampleData chunk, or its schema cannot be read"
-            );
+        {
+            reason = "there is no SampleData chunk, or its schema cannot be read";
+
+            return false;
+        }
 
         if (!TryReadHead(asd, sampleData, out var saved, out var table))
-            return new AnalysisReadOutcome.Unrecognised(
-                "the head does not lead to the SampleData chunk"
-            );
+        {
+            reason = "the head does not lead to the SampleData chunk";
+
+            return false;
+        }
 
         var scan = new Scan(saved, table, Walk(asd, types, instance));
 
@@ -135,19 +145,27 @@ internal static class AnalysisFileParser
         };
 
         if (fields.Missing is { } missing)
-            return new AnalysisReadOutcome.Unrecognised(
-                $"{missing} was not found: the file is cut short, or laid out differently"
-            );
+        {
+            reason = $"{missing} was not found: the file is cut short, or laid out differently";
+
+            return false;
+        }
 
         if (positions.Length != energies.Length)
-            return new AnalysisReadOutcome.Unrecognised(
-                "the transients' positions and energies differ in number"
-            );
+        {
+            reason = "the transients' positions and energies differ in number";
+
+            return false;
+        }
 
         if (channels < 1)
-            return new AnalysisReadOutcome.Unrecognised("the overview has no channels");
+        {
+            reason = "the overview has no channels";
 
-        var analysis = new AnalysisFile
+            return false;
+        }
+
+        analysis = new AnalysisFile
         {
             Clip = clip,
             Warp = warp,
@@ -155,7 +173,9 @@ internal static class AnalysisFileParser
             IsDefaultClipSaved = scan.Saved,
         };
 
-        return new AnalysisReadOutcome.Read(analysis);
+        reason = null;
+
+        return true;
     }
 
     /// <summary>Reads the head and the schema, and walks the instance to find where each value is.</summary>

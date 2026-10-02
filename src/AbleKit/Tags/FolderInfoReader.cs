@@ -12,41 +12,28 @@ public sealed class FolderInfoReader
     private static readonly XNamespace AblFr = "https://ns.ableton.com/xmp/fs-resources/1.0/";
 
     /// <summary>
-    /// Reads the index for <paramref name="folder"/>. Never throws — returns an empty
-    /// index when the folder has no XMP yet, the file is mid-write, or it is malformed.
+    /// Reads the store for <paramref name="folder"/>. A folder with no store has no tags, and reads as
+    /// empty.
     /// </summary>
+    /// <exception cref="TagStoreChangedException">
+    /// Live was writing the store: it is half-written, or went away while being read. Try again.
+    /// </exception>
+    /// <exception cref="IOException">The store is locked by another program.</exception>
+    /// <exception cref="UnauthorizedAccessException">Reading the store is not permitted.</exception>
     public FolderInfo Read(string folder)
     {
-        var xmpPath = FindXmp(folder);
-
-        if (xmpPath is null)
+        if (FindXmp(folder) is not { } xmpPath)
             return FolderInfo.Empty(folder);
 
-        try
-        {
-            using var stream = new FileStream(
-                xmpPath,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.ReadWrite | FileShare.Delete
-            );
+        var entries = FolderInfoFile
+            .Load(xmpPath)
+            .Descendants(AblFr + "items")
+            .Descendants(Rdf + "li")
+            .Select(ParseEntry)
+            .OfType<FileTags>()
+            .ToArray();
 
-            var document = XDocument.Load(stream);
-
-            var entries = document
-                .Descendants(AblFr + "items")
-                .Descendants(Rdf + "li")
-                .Select(ParseEntry)
-                .OfType<FileTags>()
-                .ToArray();
-
-            return new FolderInfo(folder, entries);
-        }
-        catch (Exception ex)
-            when (ex is IOException or UnauthorizedAccessException or System.Xml.XmlException)
-        {
-            return FolderInfo.Empty(folder);
-        }
+        return new FolderInfo(folder, entries);
     }
 
     private static string? FindXmp(string folder) => FolderInfoFile.In(folder);
