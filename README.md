@@ -81,33 +81,38 @@ var outcome = new AnalysisFileWriter().Write(@"C:\Samples\Break (up 1).wav.asd",
 - **It writes through a temporary file moved into place**, so Live never reads half a file.
 - `ToBytes()` gives the bytes without writing them.
 
-The waveform and transients belong to one recording. `SampleOverview.FromSamples` draws the overview
-for other audio exactly as Live would, bit for bit, from samples you decode yourself (ffmpeg's
-`-f f32le`, NAudio, …). Transients you detect yourself; the library does not.
+## Write one for audio Live has not analysed
 
-### A stem's analysis from its sibling's
-
-Live only analyses a sample once you open it. To have a new stem arrive already warped, take the
-analysis file of a **sibling**, another stem of the same song you have warped and saved, and give it
-the new stem's audio:
+Live only analyses a sample once you open it, and only warps it once you save its default clip.
+`AudioAnalysis.FromSamples` builds what Live would have measured, from samples you decode yourself
+(ffmpeg's `-f f32le`, NAudio, …): the waveform overview, drawn bit for bit as Live draws it, and the
+transients you give it. The library does not detect transients.
 
 ```csharp
-var outcome = new AnalysisFileWriter().WriteFromSibling(
-    siblingPath: @"C:\Samples\Song (Instrumental).flac.asd",
-    audioPath: @"C:\Samples\Song (Vocal).flac",
+var audio = AudioAnalysis.FromSamples(
     samples,
     channelCount: 2,
-    transients: [new Transient(Position: 11025, Energy: 0.8f), /* … */]
+    transients: [new Transient(Position: 11025, Energy: 0.8f), /* … */],
+    fileSize: new FileInfo(@"C:\Samples\Song (Vocal).flac").Length
 );
+
+var writer = new AnalysisFileWriter();
+var path = @"C:\Samples\Song (Vocal).flac.asd";
+
+// Warped like another stem of the same song that you have warped and saved…
+if (AnalysisFile.TryRead(@"C:\Samples\Song (Instrumental).flac.asd", out var sibling))
+    writer.Write(path, sibling with { Audio = audio });
+// …or from nothing: Live's default clip and warp, set as you like.
+else
+    writer.Write(path, new AnalysisFile { Audio = audio });
 ```
 
-It keeps the sibling's clip and warp, draws the overview from `samples`, writes your transients and
-the audio's size, and clears the sibling's transient edits, which belong to the sibling's audio. It
-refuses a sibling never saved, or one of another length or channel count: stems of one song are
-usually the same length, but not always.
+Replacing `Audio` drops everything the sibling measured in its own audio, its transient edits
+included, and keeps its clip and warp. Live accepts these files and leaves them as written, as far as
+it has been tried: with the full analysis of a sibling stem, with a stand-in for the part of the
+analysis nobody understands, and with no transients at all.
 
-Live accepts these files as its own and leaves them as written, as far as it has been tried. See
-[Writing one](docs/analysis-file-format.md#writing-one) for what was tested.
+See [Writing one](docs/analysis-file-format.md#writing-one) for what was tested.
 
 ## Read tags
 

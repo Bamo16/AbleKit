@@ -52,7 +52,7 @@ Byte order is **little-endian**, except the lengths of class names, which are bi
 |---|---|
 | 2 | `06 49` in every file (measured, 947 of 947) |
 | 4 | int32 *n* |
-| 4 × *n* | *n* int32 values rising from 0 to the audio's length in frames, which the last one equals exactly (measured). What the others mark is **not known**: not the transients, and not a FLAC seek table, since a WAV's file has one too. They differ between stems of one song, even in *n*, so they come from the audio's content |
+| 4 × *n* | *n* int32 values rising from 0 to the audio's length in frames, which the last one equals exactly (measured). What the others mark is **not known**: not the transients, and not a FLAC seek table, since a WAV's file has one too. They differ between stems of one song, even in *n*, so they come from the audio's content. In a click track they step 1,323 frames (30 ms at 44.1 kHz) through silence and about 676 (15 ms) while a click sounds, like the frames of an analysis that looks closer where the sound changes (measured, 2026-10-01). **Live does not need them**: see [Writing one](#writing-one) |
 | 12 | three int32s, `0, 0, 100` in every file (measured, 947 of 947) |
 | 4 | int32 *m*: 4 in every stereo file (947 of 947), 2 in a mono one (observed, 2026-10-01) |
 | *m* | *m* zero bytes, probably two per channel |
@@ -270,10 +270,10 @@ and 12.4, writes back byte for byte once its list ids are numbered afresh (2026-
 DBraun/AbletonParsing file from an earlier Live 12 writes back with its schema in the 12.3 order and
 nothing else changed.
 
-For audio Live has not seen, AbleKit borrows what it cannot compute from a **sibling**, another stem
-of the same song, warped and saved: its head's table, clip and warp. It replaces what comes from the
-audio, the overview, the transients and `OriginalFileSize`, and switches `HasUserOnsets` off and
-empties `UserOnsets`, since the sibling's user onsets sit on the sibling's audio.
+For audio Live has not seen, AbleKit computes the overview, records the transients a caller gives it
+and the file's size, and writes a head table of just 0 and the audio's length. The clip and warp
+can be Live's defaults, set by the caller, or a sibling's: another stem of the same song, warped and
+saved.
 
 What Live does with files it did not write (observed, 2026-09-15 to 2026-10-01):
 
@@ -295,6 +295,11 @@ What Live does with files it did not write (observed, 2026-09-15 to 2026-10-01):
 - **A file the writer made is accepted.** A vocal stem's file written from its instrumental's,
   with the vocal's own transients, warped, played cleanly, and showed the vocal's waveform and
   transients.
+- **The head's table is not needed** (observed, 2026-10-01). The same file with its table cut to
+  two entries, 0 and the audio's length, and again with no table at all, warped, drew and played
+  the same, in Complex mode.
+- **Marker ids can be numbered afresh.** The same file with its markers' ids 7 and 5 renumbered 0
+  and 1, and the allocator set to 2, behaved the same.
 - **Live did not rewrite any of these files** on loading them, nor on the grey-to-black pass when
   clips are moved, which is most likely its decoding cache.
 - **A marker list can be replaced in place.** Swapping one file's marker run and its id allocator
@@ -305,20 +310,17 @@ had no analysis file (measured, 2026-10-01). Making a sample arrive warped there
 the whole file, transients included.
 
 **Stems of one song are not always the same length.** In one pair of five the vocal was 645
-frames longer than the instrumental (measured, 2026-10-01). The writer compares the sibling's
-length, the last entry of its head's table, with the audio's, and refuses a mismatch: the head
-would be wrong and the overview a different size.
+frames longer than the instrumental (measured, 2026-10-01). Markers are in seconds into the audio,
+so a sibling's warp still lines up as long as the stems start together.
 
 ## What is not known
 
-- What the head's table of sample positions marks, beyond its last entry. A sibling's table was
-  harmless beside a stem it was not made from (observed, 2026-10-01).
+- What the head's table of sample positions marks, beyond its last entry. Live works without it in
+  Complex mode; whether Beats mode or auto-warp uses it has not been tried.
 - The meaning of the fixed fields guessed above, and the warp mode numbers other than 0, 3, 4 and 6
   (Beats, Re-Pitch, Complex and Complex Pro; Beats and Re-Pitch observed 2026-10-01).
 - Whether `IsWarped` is ever false in practice.
 - What makes Live fill in `AufTaktData`. The writer keeps the sibling's, as harmless (observed).
-- Whether Live needs the head's table to be the real one. If it does not, a file can be written
-  for audio with no sibling at all.
 - Anything about Live 11 and earlier. DBraun/AbletonParsing reads Live 9 and 10, whose files are
   laid out differently.
 

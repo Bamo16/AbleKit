@@ -16,7 +16,6 @@ AbleKit.Analysis.AnalysisFile.Warp.init -> void
 AbleKit.Analysis.AnalysisFileWriter
 AbleKit.Analysis.AnalysisFileWriter.AnalysisFileWriter() -> void
 AbleKit.Analysis.AnalysisFileWriter.Write(string! path, AbleKit.Analysis.AnalysisFile! analysis) -> AbleKit.Analysis.AnalysisWriteOutcome!
-AbleKit.Analysis.AnalysisFileWriter.WriteFromSibling(string! siblingPath, string! audioPath, System.ReadOnlySpan<float> samples, int channelCount, System.Collections.Generic.IReadOnlyList<AbleKit.Analysis.Transient>! transients) -> AbleKit.Analysis.AnalysisWriteOutcome!
 AbleKit.Analysis.AnalysisWriteOutcome
 AbleKit.Analysis.AnalysisWriteOutcome.AnalysisWriteOutcome(AbleKit.Analysis.AnalysisWriteOutcome! original) -> void
 AbleKit.Analysis.AnalysisWriteOutcome.Failed
@@ -25,12 +24,6 @@ AbleKit.Analysis.AnalysisWriteOutcome.Failed.Equals(AbleKit.Analysis.AnalysisWri
 AbleKit.Analysis.AnalysisWriteOutcome.Failed.Error.get -> string!
 AbleKit.Analysis.AnalysisWriteOutcome.Failed.Error.init -> void
 AbleKit.Analysis.AnalysisWriteOutcome.Failed.Failed(string! Error) -> void
-AbleKit.Analysis.AnalysisWriteOutcome.Rejected
-AbleKit.Analysis.AnalysisWriteOutcome.Rejected.Deconstruct(out string! Error) -> void
-AbleKit.Analysis.AnalysisWriteOutcome.Rejected.Equals(AbleKit.Analysis.AnalysisWriteOutcome.Rejected? other) -> bool
-AbleKit.Analysis.AnalysisWriteOutcome.Rejected.Error.get -> string!
-AbleKit.Analysis.AnalysisWriteOutcome.Rejected.Error.init -> void
-AbleKit.Analysis.AnalysisWriteOutcome.Rejected.Rejected(string! Error) -> void
 AbleKit.Analysis.AnalysisWriteOutcome.Written
 AbleKit.Analysis.AnalysisWriteOutcome.Written.Deconstruct(out string! Path) -> void
 AbleKit.Analysis.AnalysisWriteOutcome.Written.Equals(AbleKit.Analysis.AnalysisWriteOutcome.Written? other) -> bool
@@ -311,10 +304,6 @@ override AbleKit.Analysis.AnalysisWriteOutcome.Failed.Equals(object? obj) -> boo
 override AbleKit.Analysis.AnalysisWriteOutcome.Failed.GetHashCode() -> int
 override AbleKit.Analysis.AnalysisWriteOutcome.Failed.ToString() -> string!
 override AbleKit.Analysis.AnalysisWriteOutcome.GetHashCode() -> int
-override AbleKit.Analysis.AnalysisWriteOutcome.Rejected.<Clone>$() -> AbleKit.Analysis.AnalysisWriteOutcome.Rejected!
-override AbleKit.Analysis.AnalysisWriteOutcome.Rejected.Equals(object? obj) -> bool
-override AbleKit.Analysis.AnalysisWriteOutcome.Rejected.GetHashCode() -> int
-override AbleKit.Analysis.AnalysisWriteOutcome.Rejected.ToString() -> string!
 override AbleKit.Analysis.AnalysisWriteOutcome.ToString() -> string!
 override AbleKit.Analysis.AnalysisWriteOutcome.Written.<Clone>$() -> AbleKit.Analysis.AnalysisWriteOutcome.Written!
 override AbleKit.Analysis.AnalysisWriteOutcome.Written.Equals(object? obj) -> bool
@@ -376,7 +365,6 @@ override AbleKit.Tags.TagWriteOutcome.Written.Equals(object? obj) -> bool
 override AbleKit.Tags.TagWriteOutcome.Written.GetHashCode() -> int
 override AbleKit.Tags.TagWriteOutcome.Written.ToString() -> string!
 override sealed AbleKit.Analysis.AnalysisWriteOutcome.Failed.Equals(AbleKit.Analysis.AnalysisWriteOutcome? other) -> bool
-override sealed AbleKit.Analysis.AnalysisWriteOutcome.Rejected.Equals(AbleKit.Analysis.AnalysisWriteOutcome? other) -> bool
 override sealed AbleKit.Analysis.AnalysisWriteOutcome.Written.Equals(AbleKit.Analysis.AnalysisWriteOutcome? other) -> bool
 override sealed AbleKit.Tags.TagWriteOutcome.Rejected.Equals(AbleKit.Tags.TagWriteOutcome? other) -> bool
 override sealed AbleKit.Tags.TagWriteOutcome.Stale.Equals(AbleKit.Tags.TagWriteOutcome? other) -> bool
@@ -387,12 +375,11 @@ static AbleKit.Analysis.AnalysisFile.operator !=(AbleKit.Analysis.AnalysisFile? 
 static AbleKit.Analysis.AnalysisFile.operator ==(AbleKit.Analysis.AnalysisFile? left, AbleKit.Analysis.AnalysisFile? right) -> bool
 static AbleKit.Analysis.AnalysisWriteOutcome.Failed.operator !=(AbleKit.Analysis.AnalysisWriteOutcome.Failed? left, AbleKit.Analysis.AnalysisWriteOutcome.Failed? right) -> bool
 static AbleKit.Analysis.AnalysisWriteOutcome.Failed.operator ==(AbleKit.Analysis.AnalysisWriteOutcome.Failed? left, AbleKit.Analysis.AnalysisWriteOutcome.Failed? right) -> bool
-static AbleKit.Analysis.AnalysisWriteOutcome.Rejected.operator !=(AbleKit.Analysis.AnalysisWriteOutcome.Rejected? left, AbleKit.Analysis.AnalysisWriteOutcome.Rejected? right) -> bool
-static AbleKit.Analysis.AnalysisWriteOutcome.Rejected.operator ==(AbleKit.Analysis.AnalysisWriteOutcome.Rejected? left, AbleKit.Analysis.AnalysisWriteOutcome.Rejected? right) -> bool
 static AbleKit.Analysis.AnalysisWriteOutcome.Written.operator !=(AbleKit.Analysis.AnalysisWriteOutcome.Written? left, AbleKit.Analysis.AnalysisWriteOutcome.Written? right) -> bool
 static AbleKit.Analysis.AnalysisWriteOutcome.Written.operator ==(AbleKit.Analysis.AnalysisWriteOutcome.Written? left, AbleKit.Analysis.AnalysisWriteOutcome.Written? right) -> bool
 static AbleKit.Analysis.AnalysisWriteOutcome.operator !=(AbleKit.Analysis.AnalysisWriteOutcome? left, AbleKit.Analysis.AnalysisWriteOutcome? right) -> bool
 static AbleKit.Analysis.AnalysisWriteOutcome.operator ==(AbleKit.Analysis.AnalysisWriteOutcome? left, AbleKit.Analysis.AnalysisWriteOutcome? right) -> bool
+static AbleKit.Analysis.AudioAnalysis.FromSamples(System.ReadOnlySpan<float> samples, int channelCount, System.Collections.Generic.IReadOnlyList<AbleKit.Analysis.Transient>! transients, long fileSize) -> AbleKit.Analysis.AudioAnalysis!
 static AbleKit.Analysis.AudioAnalysis.operator !=(AbleKit.Analysis.AudioAnalysis? left, AbleKit.Analysis.AudioAnalysis? right) -> bool
 static AbleKit.Analysis.AudioAnalysis.operator ==(AbleKit.Analysis.AudioAnalysis? left, AbleKit.Analysis.AudioAnalysis? right) -> bool
 static AbleKit.Analysis.Clip.operator !=(AbleKit.Analysis.Clip? left, AbleKit.Analysis.Clip? right) -> bool

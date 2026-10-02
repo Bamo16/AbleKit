@@ -10,11 +10,11 @@ public sealed record AudioAnalysis
     public required SampleOverview Overview { get; init; }
 
     /// <summary>
-    /// Rising sample positions whose last entry is the audio's length in frames. What the others mark
-    /// is not known, and they come from the audio's content, so keep the table of a file read for the
-    /// same audio.
+    /// Rising sample positions whose last entry is the audio's length in frames, apparently where some
+    /// analysis of Live's looked at the audio. Live warps, draws and plays a sample without them, and
+    /// accepts a table holding only 0 and the length, or none at all.
     /// </summary>
-    public required IReadOnlyList<int> HeadTable { get; init; }
+    public IReadOnlyList<int> HeadTable { get; init; } = [];
 
     /// <summary>
     /// The transients Live detected, in order of position; a position can repeat. Live shows these
@@ -39,6 +39,75 @@ public sealed record AudioAnalysis
 
     /// <summary>The audio file's size in bytes when it was analysed. Live does not check it.</summary>
     public int OriginalFileSize { get; init; }
+
+    /// <summary>
+    /// An analysis of decoded audio as Live would write it: the overview drawn bit for bit as Live
+    /// draws it, the transients given, and the file's size. The library does not detect transients.
+    /// </summary>
+    /// <param name="samples">The audio decoded to floats from −1 to 1, channels interleaved.</param>
+    /// <param name="channelCount">How many channels <paramref name="samples"/> interleaves.</param>
+    /// <param name="transients">
+    /// In order of position, inside the audio, with energies from 0 to 1. Empty is accepted; Live then
+    /// shows none and does not detect its own.
+    /// </param>
+    /// <param name="fileSize">The audio file's size in bytes.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="channelCount"/> is less than 1, or <paramref name="fileSize"/> is negative or
+    /// beyond what the file can record, 2 GiB.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="samples"/> is empty or not a whole number of frames, or a transient is out of
+    /// order, outside the audio, or has an energy outside 0 to 1.
+    /// </exception>
+    public static AudioAnalysis FromSamples(
+        ReadOnlySpan<float> samples,
+        int channelCount,
+        IReadOnlyList<Transient> transients,
+        long fileSize
+    )
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(fileSize);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(fileSize, int.MaxValue);
+
+        var overview = SampleOverview.FromSamples(samples, channelCount);
+        var frames = samples.Length / channelCount;
+        CheckTransients(transients, frames);
+
+        return new AudioAnalysis
+        {
+            Overview = overview,
+            HeadTable = [0, frames],
+            Transients = transients,
+            OriginalFileSize = (int)fileSize,
+        };
+    }
+
+    private static void CheckTransients(IReadOnlyList<Transient> transients, int frames)
+    {
+        for (var i = 0; i < transients.Count; i++)
+        {
+            var transient = transients[i];
+
+            if (transient.Position < 0 || transient.Position >= frames)
+                throw new ArgumentException(
+                    $"transient {i} is at frame {transient.Position}, outside the audio's {frames}",
+                    nameof(transients)
+                );
+
+            // Live's own lists repeat a position now and then, so only going backwards is refused.
+            if (i > 0 && transient.Position < transients[i - 1].Position)
+                throw new ArgumentException(
+                    $"transient {i} is before the one ahead of it",
+                    nameof(transients)
+                );
+
+            if (transient.Energy is not (>= 0 and <= 1))
+                throw new ArgumentException(
+                    $"transient {i} has energy {transient.Energy}, outside 0 to 1",
+                    nameof(transients)
+                );
+        }
+    }
 }
 
 /// <summary>A transient, which Live draws as a tick in the clip view and warps from.</summary>
