@@ -128,7 +128,9 @@ public sealed class AudioAnalysisTests
 
     private static AnalysisFile Read(string fixture)
     {
-        Assert.True(AnalysisFile.TryRead(ClickTrack.Fixture(fixture), out var analysis));
+        Assert.True(
+            AnalysisFile.TryParse(File.ReadAllBytes(ClickTrack.Fixture(fixture)), out var analysis)
+        );
 
         return analysis;
     }

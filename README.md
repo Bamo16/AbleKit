@@ -36,8 +36,12 @@ dotnet add package AbleKit --prerelease
 ```csharp
 using AbleKit.Analysis;
 
-if (AnalysisFile.TryRead(@"C:\Samples\Break.wav.asd", out var analysis))
+var outcome = new AnalysisFileReader().Read(@"C:\Samples\Break.wav.asd");
+
+if (outcome is AnalysisReadOutcome.Read read)
 {
+    var analysis = read.Analysis;
+
     // Null until Save Default Clip is pressed, which is also when Live writes the markers.
     var clip = analysis.DefaultClip;
 
@@ -60,8 +64,16 @@ An `AnalysisFile` holds everything in the file, in three parts named after what 
 - **`Audio`**: what Live measured in the audio: the waveform overview, the transients, and the file's
   size.
 
-`TryRead` returns false for a file it cannot read or does not recognise, and never throws for a
-bad file. `TryParse` does the same for bytes already in memory.
+`Read` never throws for a bad file. It says what happened instead:
+
+| outcome | means |
+|---|---|
+| `Read` | the file was read; `Analysis` holds it |
+| `Missing` | there is no file. Live writes one only once a sample has been opened, so for many there is none |
+| `Failed` | the file is there but could not be opened, locked or not permitted; `Error` says which |
+| `Unrecognised` | the file is not one this library reads, cut short or laid out differently; `Reason` says where reading gave up |
+
+`AnalysisFile.TryParse` reads bytes already in memory.
 
 ## Change and write one
 
@@ -102,9 +114,11 @@ var audio = AudioAnalysis.FromSamples(
 var writer = new AnalysisFileWriter();
 var path = @"C:\Samples\Song (Vocal).flac.asd";
 
+var sibling = new AnalysisFileReader().Read(@"C:\Samples\Song (Instrumental).flac.asd");
+
 // Warped like another stem of the same song that you have warped and saved…
-if (AnalysisFile.TryRead(@"C:\Samples\Song (Instrumental).flac.asd", out var sibling))
-    writer.Write(path, sibling with { Audio = audio });
+if (sibling is AnalysisReadOutcome.Read read)
+    writer.Write(path, read.Analysis with { Audio = audio });
 // …or from nothing: Live's default clip and warp, set as you like.
 else
     writer.Write(path, new AnalysisFile { Audio = audio });

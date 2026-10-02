@@ -14,7 +14,7 @@ public sealed class AnalysisFileRealLibraryTests
                 )
                 .Select(file => new Sidecar(
                     Path.GetFileName(file),
-                    AnalysisFile.TryRead(file, out var analysis) ? analysis : null
+                    new AnalysisFileReader().Read(file)
                 )),
         ]
     );
@@ -22,7 +22,10 @@ public sealed class AnalysisFileRealLibraryTests
     [Fact]
     public void Every_sidecar_in_the_library_parses()
     {
-        var unreadable = Sidecars().Where(s => s.Analysis is null).Select(s => s.File).ToList();
+        var unreadable = Sidecars()
+            .Where(s => s.Outcome is not AnalysisReadOutcome.Read)
+            .Select(s => $"{s.File}: {s.Outcome}")
+            .ToList();
 
         Assert.Empty(unreadable);
     }
@@ -153,11 +156,10 @@ public sealed class AnalysisFileRealLibraryTests
     private static IEnumerable<(string File, AnalysisFile Analysis)> Warps() =>
         Sidecars()
             .Select(s =>
-                (
-                    s.File,
-                    s.Analysis ?? throw new InvalidOperationException($"{s.File} did not parse.")
-                )
+                s.Outcome is AnalysisReadOutcome.Read read
+                    ? (s.File, read.Analysis)
+                    : throw new InvalidOperationException($"{s.File} did not read: {s.Outcome}")
             );
 
-    private sealed record Sidecar(string File, AnalysisFile? Analysis);
+    private sealed record Sidecar(string File, AnalysisReadOutcome Outcome);
 }

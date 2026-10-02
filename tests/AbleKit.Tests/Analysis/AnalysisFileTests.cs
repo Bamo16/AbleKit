@@ -59,7 +59,10 @@ public sealed class AnalysisFileTests
     public void A_moved_marker_reads_back_where_it_was_put()
     {
         Assert.True(
-            AnalysisFile.TryRead(ClickTrack.Fixture("sidecar-clicks.asd"), out var analysis)
+            AnalysisFile.TryParse(
+                File.ReadAllBytes(ClickTrack.Fixture("sidecar-clicks.asd")),
+                out var analysis
+            )
         );
         var markers = analysis.Warp.Markers;
 
@@ -79,7 +82,10 @@ public sealed class AnalysisFileTests
     public void A_file_with_no_markers_reads_back_with_none()
     {
         Assert.True(
-            AnalysisFile.TryRead(ClickTrack.Fixture("sidecar-clicks.asd"), out var analysis)
+            AnalysisFile.TryParse(
+                File.ReadAllBytes(ClickTrack.Fixture("sidecar-clicks.asd")),
+                out var analysis
+            )
         );
 
         var cleared = analysis with { Warp = analysis.Warp with { Markers = [] } };
@@ -92,7 +98,10 @@ public sealed class AnalysisFileTests
     public void A_marker_before_the_one_ahead_of_it_is_refused()
     {
         Assert.True(
-            AnalysisFile.TryRead(ClickTrack.Fixture("sidecar-clicks.asd"), out var analysis)
+            AnalysisFile.TryParse(
+                File.ReadAllBytes(ClickTrack.Fixture("sidecar-clicks.asd")),
+                out var analysis
+            )
         );
         var markers = analysis.Warp.Markers;
 
@@ -111,7 +120,10 @@ public sealed class AnalysisFileTests
     public void An_overview_Live_could_not_have_drawn_is_refused()
     {
         Assert.True(
-            AnalysisFile.TryRead(ClickTrack.Fixture("sidecar-clicks.asd"), out var analysis)
+            AnalysisFile.TryParse(
+                File.ReadAllBytes(ClickTrack.Fixture("sidecar-clicks.asd")),
+                out var analysis
+            )
         );
         var overview = analysis.Audio.Overview;
 

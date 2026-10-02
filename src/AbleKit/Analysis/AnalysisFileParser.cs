@@ -35,15 +35,20 @@ internal static class AnalysisFileParser
     private static readonly byte[] HeadTrailerStart = [0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0];
     private static readonly byte[] SampleDataTag = [0x00, 0x0A, .. "SampleData"u8];
 
-    internal static bool TryParse(
-        ReadOnlySpan<byte> asd,
-        [NotNullWhen(true)] out AnalysisFile? analysis
-    )
+    /// <summary>The file read, or why it was not recognised.</summary>
+    internal static AnalysisReadOutcome Parse(ReadOnlySpan<byte> asd)
     {
-        analysis = null;
+        if (!TryReadSchema(asd, out var types, out var sampleData, out var instance))
+            return new AnalysisReadOutcome.Unrecognised(
+                "there is no SampleData chunk, or its schema cannot be read"
+            );
 
-        if (!TryScan(asd, out var scan))
-            return false;
+        if (!TryReadHead(asd, sampleData, out var saved, out var table))
+            return new AnalysisReadOutcome.Unrecognised(
+                "the head does not lead to the SampleData chunk"
+            );
+
+        var scan = new Scan(saved, table, Walk(asd, types, instance));
 
         var fields = new Fields(asd.ToArray(), scan.Layout);
 
@@ -129,10 +134,20 @@ internal static class AnalysisFileParser
             OriginalFileSize = fields.Int32("OriginalFileSize.Value"),
         };
 
-        if (fields.Failed || positions.Length != energies.Length || channels < 1)
-            return false;
+        if (fields.Missing is { } missing)
+            return new AnalysisReadOutcome.Unrecognised(
+                $"{missing} was not found: the file is cut short, or laid out differently"
+            );
 
-        analysis = new AnalysisFile
+        if (positions.Length != energies.Length)
+            return new AnalysisReadOutcome.Unrecognised(
+                "the transients' positions and energies differ in number"
+            );
+
+        if (channels < 1)
+            return new AnalysisReadOutcome.Unrecognised("the overview has no channels");
+
+        var analysis = new AnalysisFile
         {
             Clip = clip,
             Warp = warp,
@@ -140,7 +155,7 @@ internal static class AnalysisFileParser
             IsDefaultClipSaved = scan.Saved,
         };
 
-        return true;
+        return new AnalysisReadOutcome.Read(analysis);
     }
 
     /// <summary>Reads the head and the schema, and walks the instance to find where each value is.</summary>
@@ -598,7 +613,8 @@ internal static class AnalysisFileParser
         /// <summary>A packed <c>OnsetEvent</c>: <c>Time</c> and <c>Energy</c> as doubles, then <c>IsVolatile</c>.</summary>
         private const int OnsetEventSize = sizeof(double) + sizeof(double) + sizeof(bool);
 
-        public bool Failed { get; private set; }
+        /// <summary>The first path the walk did not find, or null when every one was there.</summary>
+        public string? Missing { get; private set; }
 
         public bool Bool(string path) => Value(path, sizeof(bool), bytes => bytes[0] is not 0);
 
@@ -619,7 +635,7 @@ internal static class AnalysisFileParser
         {
             if (!layout.Counts.TryGetValue(path, out var count))
             {
-                Failed = true;
+                Missing ??= path;
 
                 return [];
             }
@@ -631,7 +647,7 @@ internal static class AnalysisFileParser
         {
             if (Bytes(path) is not { } bytes || bytes.Length % OnsetEventSize is not 0)
             {
-                Failed = true;
+                Missing ??= path;
 
                 return [];
             }
@@ -657,7 +673,7 @@ internal static class AnalysisFileParser
             if (layout.Arrays.TryGetValue(path, out var array))
                 return asd[array.Offset..array.End];
 
-            Failed = true;
+            Missing ??= path;
 
             return null;
         }
@@ -667,7 +683,7 @@ internal static class AnalysisFileParser
             if (layout.Values.TryGetValue(path, out var offset) && offset + size <= asd.Length)
                 return read(asd.AsSpan(offset, size));
 
-            Failed = true;
+            Missing ??= path;
 
             return default!;
         }

@@ -11,7 +11,9 @@ public sealed class SampleOverviewTests
     public void Every_level_matches_the_overview_Live_drew_bit_for_bit(string sidecar, bool mono)
     {
         var track = mono ? ClickTrack.Mono : ClickTrack.Stereo;
-        Assert.True(AnalysisFile.TryRead(ClickTrack.Fixture(sidecar), out var analysis));
+        Assert.True(
+            AnalysisFile.TryParse(File.ReadAllBytes(ClickTrack.Fixture(sidecar)), out var analysis)
+        );
         var live = analysis.Audio.Overview;
 
         var drawn = SampleOverview.FromSamples(track.Samples, track.ChannelCount);

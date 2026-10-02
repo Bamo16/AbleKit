@@ -106,7 +106,7 @@ public sealed class AnalysisFileParserTests
 
     private static AnalysisFile Read(string name)
     {
-        Assert.True(AnalysisFile.TryRead(Fixture(name), out var warp), name);
+        Assert.True(AnalysisFile.TryParse(File.ReadAllBytes(Fixture(name)), out var warp), name);
 
         return warp;
     }

@@ -42,7 +42,7 @@ public sealed class AnalysisFileWriterTests : IDisposable
 
         _writer.Write(path, Clicks());
 
-        Assert.True(AnalysisFile.TryRead(path, out _));
+        Assert.IsType<AnalysisReadOutcome.Read>(new AnalysisFileReader().Read(path));
         Assert.Equal(["clicks.wav.asd"], Directory.GetFiles(_root).Select(Path.GetFileName));
     }
 
@@ -60,7 +60,10 @@ public sealed class AnalysisFileWriterTests : IDisposable
     private static AnalysisFile Clicks()
     {
         Assert.True(
-            AnalysisFile.TryRead(ClickTrack.Fixture("sidecar-clicks.asd"), out var analysis)
+            AnalysisFile.TryParse(
+                File.ReadAllBytes(ClickTrack.Fixture("sidecar-clicks.asd")),
+                out var analysis
+            )
         );
 
         return analysis;

@@ -4,8 +4,8 @@ namespace AbleKit.Analysis;
 
 /// <summary>
 /// Everything an analysis file, the <c>.asd</c> beside a sample, holds: the clip Live pulls in, how
-/// it is warped, and what Live measured in the audio. Read one, change it with <c>with</c>, and write
-/// it back with <see cref="ToBytes"/> or <see cref="AnalysisFileWriter"/>.
+/// it is warped, and what Live measured in the audio. Read one with <see cref="AnalysisFileReader"/>,
+/// change it with <c>with</c>, and write it with <see cref="AnalysisFileWriter"/>.
 /// </summary>
 public sealed record AnalysisFile
 {
@@ -37,26 +37,21 @@ public sealed record AnalysisFile
             (true, false) => new DefaultClip(Clip.LoopStart, Clip.LoopEnd),
         };
 
-    /// <summary>Reads the analysis file at <paramref name="path"/>; false when it is unreadable or unrecognised.</summary>
-    public static bool TryRead(string path, [NotNullWhen(true)] out AnalysisFile? analysis)
-    {
-        try
-        {
-            return TryParse(File.ReadAllBytes(path), out analysis);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            analysis = null;
-
-            return false;
-        }
-    }
-
-    /// <summary>Reads an analysis file already in memory; false when it is unrecognised.</summary>
+    /// <summary>
+    /// Reads an analysis file already in memory; false when it is not one this library recognises.
+    /// <see cref="AnalysisFileReader"/> reads one from disk and says why it could not.
+    /// </summary>
     public static bool TryParse(
         ReadOnlySpan<byte> asd,
         [NotNullWhen(true)] out AnalysisFile? analysis
-    ) => AnalysisFileParser.TryParse(asd, out analysis);
+    )
+    {
+        analysis = AnalysisFileParser.Parse(asd) is AnalysisReadOutcome.Read read
+            ? read.Analysis
+            : null;
+
+        return analysis is not null;
+    }
 
     /// <summary>
     /// The file as Live 12 writes it. Reading a file Live wrote and writing it back gives the same
