@@ -3,7 +3,7 @@ using AbleKit.Sets;
 
 namespace AbleKit.Tests.Sets;
 
-/// <summary>The author's own sets: looked up in place, and relinked only as copies.</summary>
+/// <summary>Relinking copies of real sets (see <see cref="RealLibrary"/>); the originals are only read.</summary>
 public sealed class LiveSetsRealLibraryTests : IDisposable
 {
     private readonly string _copy = Path.Combine(
@@ -21,58 +21,26 @@ public sealed class LiveSetsRealLibraryTests : IDisposable
     }
 
     [Fact]
-    public void A_sample_a_set_uses_is_found_in_it()
-    {
-        SkipUnlessPresent();
-
-        var sets = new LiveSets(RealLibrary.ProjectsRoot).Using([
-            Path.Combine(RealLibrary.MashupRoot, "Fat Dog - Running (Instrumental - Full).flac"),
-        ]);
-
-        Assert.Contains(
-            "Hell for Leather (Aiobahn x Fat Dog)",
-            sets.Select(Path.GetFileNameWithoutExtension)
-        );
-    }
-
-    [Fact]
     public void Relinking_a_real_sample_changes_only_the_lines_that_name_it()
     {
-        SkipUnlessPresent();
+        var projects = RealLibrary.ProjectsFolder();
+        CopySets(projects);
 
-        foreach (
-            var set in Directory.EnumerateFiles(
-                RealLibrary.ProjectsRoot,
-                "*.als",
-                SearchOption.AllDirectories
-            )
-        )
-        {
-            var relative = Path.GetRelativePath(RealLibrary.ProjectsRoot, set);
-
-            if (relative.Split(Path.DirectorySeparatorChar).Contains("Backup"))
-                continue;
-
-            var target = Path.Combine(_copy, relative);
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(set, target);
-        }
-
-        var from = Path.Combine(
-            RealLibrary.MashupRoot,
-            "Glen Check - Dazed & Confused (Instrumental - Full).flac"
-        );
-        var to = Path.Combine(
-            RealLibrary.MashupRoot,
-            "Renamed & Relinked (Instrumental - Full).flac"
-        );
         var copies = new LiveSets(_copy);
+
+        // The first sample some set uses, renamed in place.
+        var from = RealLibrary.AudioFiles().FirstOrDefault(file => copies.Using([file]).Count > 0);
+        Assert.SkipWhen(from is null, "No set uses a sample in the sample folders.");
+
+        var to = Path.Combine(
+            Path.GetDirectoryName(from)!,
+            $"{Path.GetFileNameWithoutExtension(from)} (Relinked){Path.GetExtension(from)}"
+        );
         var sets = copies.Using([from]);
         var before = sets.ToDictionary(set => set, Lines);
 
         var result = copies.Relink([new(from, to)], "test");
 
-        Assert.NotEmpty(sets);
         Assert.Equal(sets, result.Relinked);
         Assert.Empty(result.Failed);
         Assert.Empty(copies.Using([from]));
@@ -92,8 +60,8 @@ public sealed class LiveSetsRealLibraryTests : IDisposable
                 pair =>
                     Assert.Equal(
                         pair.First.Replace(
-                            "Glen Check - Dazed &amp; Confused",
-                            "Renamed &amp; Relinked"
+                            Escaped(Path.GetFileName(from)),
+                            Escaped(Path.GetFileName(to))
                         ),
                         pair.Second
                     )
@@ -101,11 +69,25 @@ public sealed class LiveSetsRealLibraryTests : IDisposable
         }
     }
 
-    private static void SkipUnlessPresent() =>
-        Assert.SkipUnless(
-            Directory.Exists(RealLibrary.ProjectsRoot),
-            $"{RealLibrary.ProjectsRoot} is not on this machine."
-        );
+    /// <summary>Every set but Live's backups, copied with its folders into <see cref="_copy"/>.</summary>
+    private void CopySets(string projects)
+    {
+        foreach (
+            var set in Directory.EnumerateFiles(projects, "*.als", SearchOption.AllDirectories)
+        )
+        {
+            var relative = Path.GetRelativePath(projects, set);
+
+            if (relative.Split(Path.DirectorySeparatorChar).Contains("Backup"))
+                continue;
+
+            var target = Path.Combine(_copy, relative);
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            File.Copy(set, target);
+        }
+    }
+
+    private static string Escaped(string name) => name.Replace("&", "&amp;");
 
     private static string[] Lines(string set)
     {

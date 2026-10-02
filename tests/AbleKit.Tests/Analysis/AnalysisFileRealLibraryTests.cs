@@ -2,13 +2,16 @@ using AbleKit.Analysis;
 
 namespace AbleKit.Tests.Analysis;
 
-/// <summary>The reader against every <c>.asd</c> the real library holds.</summary>
+/// <summary>The reader against every <c>.asd</c> in a real library (see <see cref="RealLibrary"/>).</summary>
 public sealed class AnalysisFileRealLibraryTests
 {
     private static readonly Lazy<IReadOnlyList<Sidecar>> Library = new(() =>
         [
-            .. Directory
-                .EnumerateFiles(RealLibrary.MashupRoot, "*.asd", SearchOption.AllDirectories)
+            .. RealLibrary
+                .SampleFolders()
+                .SelectMany(folder =>
+                    Directory.EnumerateFiles(folder, "*.asd", SearchOption.AllDirectories)
+                )
                 .Select(file => new Sidecar(
                     Path.GetFileName(file),
                     AnalysisFile.TryRead(file, out var warp) ? warp : null
@@ -119,10 +122,8 @@ public sealed class AnalysisFileRealLibraryTests
 
     private static IReadOnlyList<Sidecar> Sidecars()
     {
-        Assert.SkipUnless(
-            Directory.Exists(RealLibrary.MashupRoot),
-            $"{RealLibrary.MashupRoot} not present on this machine."
-        );
+        // Skips when no library is configured.
+        RealLibrary.SampleFolders();
 
         return Library.Value;
     }

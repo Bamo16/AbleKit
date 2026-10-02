@@ -24,8 +24,9 @@ public sealed class FolderInfoWriterRealDataTests : IDisposable
 
     private string? CopyRealStore()
     {
-        var source = new[] { RealLibrary.StagingRoot, RealLibrary.MashupRoot }
-            .Select(r => Path.Combine(r, "Ableton Folder Info"))
+        var source = RealLibrary
+            .SampleFolders()
+            .Select(folder => Path.Combine(folder, "Ableton Folder Info"))
             .Where(Directory.Exists)
             .SelectMany(d => Directory.EnumerateFiles(d, "*.xmp"))
             .Order(StringComparer.Ordinal)

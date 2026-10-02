@@ -2,53 +2,45 @@ using AbleKit.Tags;
 
 namespace AbleKit.Tests.Tags;
 
-/// <summary>The XMP contract, asserted against both real roots.</summary>
+/// <summary>The XMP contract, asserted against a real library (see <see cref="RealLibrary"/>).</summary>
 public sealed class FolderInfoRealLibraryTests
 {
-    private const string StagingRoot = @"P:\RYAN\Ableton\Sample Staging";
-    private const string MashupRoot = @"P:\RYAN\Ableton\Mashup Samples";
-
-    public static TheoryData<string> Roots => [StagingRoot, MashupRoot];
-
-    [Theory]
-    [MemberData(nameof(Roots))]
-    public void Reads_every_entry_in_a_real_root(string root)
+    [Fact]
+    public void Reads_every_entry_in_a_real_folder()
     {
-        Assert.SkipUnless(Directory.Exists(root), $"{root} not present on this machine.");
+        foreach (var folder in RealLibrary.SampleFolders())
+        {
+            var info = new FolderInfoReader().Read(folder);
 
-        var info = new FolderInfoReader().Read(root);
-
-        Assert.NotEmpty(info.Entries);
-        Assert.All(info.Entries, e => Assert.NotEmpty(e.RelativePath));
-        Assert.All(info.Entries, e => Assert.NotEmpty(e.Keywords));
+            Assert.NotEmpty(info.Entries);
+            Assert.All(info.Entries, e => Assert.NotEmpty(e.RelativePath));
+            Assert.All(info.Entries, e => Assert.NotEmpty(e.Keywords));
+        }
     }
 
     [Fact]
-    public void A_name_under_two_roots_still_means_its_own_roots_file()
+    public void A_name_in_two_folders_still_means_its_own_folders_file()
     {
-        Assert.SkipUnless(
-            Directory.Exists(StagingRoot) && Directory.Exists(MashupRoot),
-            "Both Ableton roots must be present."
-        );
+        var folders = RealLibrary.SampleFolders();
+        Assert.SkipWhen(folders.Count < 2, "Needs two real sample folders.");
 
-        // The two roots' stores have different UUIDs; the reader keys on the containing root.
+        // The two folders' stores have different UUIDs; the reader keys on the containing folder.
+        var (first, second) = (folders[0], folders[1]);
         var reader = new FolderInfoReader();
-        var staging = reader.Read(StagingRoot);
-        var mashup = reader.Read(MashupRoot);
+        var (one, two) = (reader.Read(first), reader.Read(second));
 
-        // A name can be under both roots on purpose; it must mean its own root's file.
         foreach (
-            var shared in staging
+            var shared in one
                 .Entries.Select(e => e.RelativePath)
                 .Intersect(
-                    mashup.Entries.Select(e => e.RelativePath),
+                    two.Entries.Select(e => e.RelativePath),
                     StringComparer.OrdinalIgnoreCase
                 )
         )
         {
-            Assert.True(staging.TryGet(Path.Combine(StagingRoot, shared), out _));
-            Assert.False(staging.TryGet(Path.Combine(MashupRoot, shared), out _));
-            Assert.False(mashup.TryGet(Path.Combine(StagingRoot, shared), out _));
+            Assert.True(one.TryGet(Path.Combine(first, shared), out _));
+            Assert.False(one.TryGet(Path.Combine(second, shared), out _));
+            Assert.False(two.TryGet(Path.Combine(first, shared), out _));
         }
     }
 }

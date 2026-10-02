@@ -221,6 +221,17 @@ What the relink does:
 Windows, Live 12.3 to 12.4, against one library of about 950 samples. Tag stores are per folder and
 paths use Windows separators; macOS is untested. Reports from other setups are welcome.
 
+## Running the tests
+
+`dotnet test --solution AbleKit.slnx` runs everything that needs no Ableton library: the formats
+against committed fixtures, which Live wrote. The rest checks a real library and skips unless two
+environment variables point at one:
+
+| variable | holds |
+|---|---|
+| `ABLEKIT_SAMPLE_FOLDERS` | folders Live has analysed and tagged, separated by `;` |
+| `ABLEKIT_PROJECTS_FOLDER` | a folder of Live sets; they are only read, and relinked as copies |
+
 ## Maintenance
 
 Built for my own use. Issues are welcome; fixes are best-effort. A pull request with a fixture that
