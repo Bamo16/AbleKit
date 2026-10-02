@@ -39,7 +39,9 @@ using AbleKit.Analysis;
 if (AnalysisFile.TryRead(@"C:\Samples\Break.wav.asd", out var analysis))
 {
     // Null until Save Default Clip is pressed, which is also when Live writes the markers.
-    if (analysis.DefaultClip is { } clip)
+    var clip = analysis.DefaultClip;
+
+    if (clip != null)
         Console.WriteLine($"clip: beat {clip.Start} to {clip.End}");
 
     foreach (var marker in analysis.Warp.Markers)
@@ -66,7 +68,8 @@ bad file. `TryParse` does the same for bytes already in memory.
 Change anything with `with`, then write the result to any path:
 
 ```csharp
-var raised = analysis with { Clip = analysis.Clip with { PitchCoarse = analysis.Clip.PitchCoarse + 1 } };
+var clip = analysis.Clip with { PitchCoarse = analysis.Clip.PitchCoarse + 1 };
+var raised = analysis with { Clip = clip };
 
 var outcome = new AnalysisFileWriter().Write(@"C:\Samples\Break (up 1).wav.asd", raised);
 ```
@@ -157,14 +160,14 @@ var outcome = new FolderInfoWriter().Apply(
 
 switch (outcome)
 {
-    case TagWriteOutcome.Written(var applied):
-        Console.WriteLine($"Tagged {applied} files.");
+    case TagWriteOutcome.Written written:
+        Console.WriteLine($"Tagged {written.Applied} files.");
         break;
     case TagWriteOutcome.Stale:
         Console.WriteLine("The store changed while writing; nothing was written. Try again.");
         break;
-    case TagWriteOutcome.Rejected(var error):
-        Console.WriteLine($"Nothing was written: {error}");
+    case TagWriteOutcome.Rejected rejected:
+        Console.WriteLine($"Nothing was written: {rejected.Error}");
         break;
 }
 ```
