@@ -47,7 +47,7 @@ if (AnalysisFile.TryRead(@"C:\Samples\Break.wav.asd", out var analysis))
     foreach (var marker in analysis.Warp.Markers)
         Console.WriteLine($"{marker.Seconds:F3} s is beat {marker.Beat}");
 
-    // Live stores no tempo, only markers; a tempo is the slope between two of them.
+    // The warp holds markers, not a tempo: between two markers, the tempo is beats over seconds.
     Console.WriteLine($"{analysis.Warp.TempoAt(0):F2} BPM at the start");
 }
 ```

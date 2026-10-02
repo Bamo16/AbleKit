@@ -231,8 +231,10 @@ bytes. The median file measured is 694 KB.
 A `WarpMarker` has two float64 fields, **`SecTime`** (a position in the audio, in seconds from its
 start) and **`BeatTime`** (the grid position it is pinned to). That is all.
 
-- **No tempo is stored anywhere.** A tempo is the slope between two consecutive markers:
-  `(beat₂ − beat₁) / (sec₂ − sec₁) × 60` BPM.
+- **The warp stores no tempo.** A tempo is the slope between two consecutive markers:
+  `(beat₂ − beat₁) / (sec₂ − sec₁) × 60` BPM, which matched Live on every click fixture, past the
+  last visible marker included. The file's only BPM is Live's tempo estimate (see
+  [Tempo analysis](#tempo-analysis)), rarely set and not the warp's.
 - **Seconds are absolute into the audio.** A marker list copied into the file of another,
   sample-aligned file warps it identically (observed).
 - **Live adds a hidden marker 1/32 beat after the last one.** A warp with one marker placed by hand,
