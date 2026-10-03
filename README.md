@@ -48,7 +48,11 @@ if (AnalysisFile.TryRead(@"C:\Samples\Break.wav.asd", out var analysis))
         Console.WriteLine($"{marker.Seconds:F3} s is beat {marker.Beat}");
 
     // The warp holds markers, not a tempo: between two markers, the tempo is beats over seconds.
-    Console.WriteLine($"{analysis.Warp.TempoAt(0):F2} BPM at the start");
+    // With fewer than two markers there is none, and TempoAt returns null.
+    var tempo = analysis.Warp.TempoAt(0);
+
+    if (tempo != null)
+        Console.WriteLine($"{tempo:F2} BPM at the start");
 }
 ```
 
@@ -91,7 +95,8 @@ raised.Write(@"C:\Samples\Break (up 1).wav.asd");
 - **It refuses what Live could not have written**, such as markers out of order or an overview of the
   wrong size, with an `InvalidOperationException`, rather than leave Live to make sense of it.
 - **It writes through a temporary file moved into place**, so Live never reads half a file. A file
-  it cannot write throws an `IOException`, and nothing is written.
+  it cannot write throws an `IOException`, or an `UnauthorizedAccessException` where writing is not
+  permitted, and nothing is written.
 - `ToBytes()` gives the bytes without writing them.
 
 ## Write one for audio Live has not analysed
@@ -150,7 +155,8 @@ if (fromIndex.TryGet(@"C:\Samples\Drums\Kick.wav", out var tags))
 ```
 
 A folder with no store, or one Live's index does not cover, reads as empty. A store or index that
-cannot be read throws an `IOException`. One Live was writing at that moment throws a
+cannot be read throws an `IOException`, or an `UnauthorizedAccessException` where reading is not
+permitted. One Live was writing at that moment throws a
 `TagStoreChangedException`, which is an `IOException`; reading again fixes it.
 
 Keywords are raw, as Live writes them: `Category|Value`, or deeper for Live's nested tags
