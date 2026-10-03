@@ -1,0 +1,146 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "${workspaceFolder}/AbleKit.slnx",
+                "/consoleloggerparameters:NoSummary;ForceNoAlign"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "test",
+            "detail": "Run the tests that need no real Ableton library. The rest skip unless ABLEKIT_SAMPLE_FOLDERS and ABLEKIT_PROJECTS_FOLDER are set.",
+            "type": "process",
+            "command": "dotnet",
+            "args": ["test", "--solution", "${workspaceFolder}/AbleKit.slnx"],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "format",
+            "detail": "Format the repo with CSharpier.",
+            "type": "process",
+            "command": "dotnet",
+            "args": ["csharpier", "format", "${workspaceFolder}"],
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "format: check",
+            "detail": "Fail if anything is unformatted, without writing. What CI would run.",
+            "type": "process",
+            "command": "dotnet",
+            "args": ["csharpier", "check", "${workspaceFolder}"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "restore",
+            "detail": "Restore packages and the local tool manifest (CSharpier).",
+            "type": "process",
+            "command": "dotnet",
+            "args": ["restore", "${workspaceFolder}/AbleKit.slnx"],
+            "dependsOn": "restore: tools",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "restore: tools",
+            "type": "process",
+            "command": "dotnet",
+            "args": ["tool", "restore"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "clean",
+            "type": "process",
+            "command": "dotnet",
+            "args": ["clean", "${workspaceFolder}/AbleKit.slnx"],
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "pack",
+            "detail": "Build the NuGet package into publish/, with the version AbleKit.csproj sets.",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "pack",
+                "${workspaceFolder}/src/AbleKit/AbleKit.csproj",
+                "--configuration",
+                "Release",
+                "--output",
+                "${workspaceFolder}/publish"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "release: tag and push",
+            "detail": "Tag the current commit with the version in AbleKit.csproj (v<Version>) and push the tag, which triggers release.yml to pack, test and push to NuGet. Run after bumping <Version> and merging to main.",
+            "type": "process",
+            "command": "pwsh",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$version = (Select-String -Path '${workspaceFolder}/src/AbleKit/AbleKit.csproj' -Pattern '<Version>(.*)</Version>').Matches[0].Groups[1].Value; git tag \"v$version\" && git push origin \"v$version\""
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}

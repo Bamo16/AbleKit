@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    permissions:
+      id-token: write # lets NuGet/login trade a GitHub OIDC token for a short-lived NuGet API key
+      contents: write # lets softprops/action-gh-release create the release
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - run: dotnet tool restore
+      - run: dotnet csharpier check .
+      - run: dotnet test --solution AbleKit.slnx
+      - run: dotnet pack src/AbleKit/AbleKit.csproj --configuration Release --output publish
+      # The tag is the source of truth for the version Live sees on NuGet; Directory.Build.props
+      # and the csproj's <Version> are for local packs and must be bumped to match before tagging.
+      - name: Check the tag matches the package version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}".TrimStart("v")
+          $package = Get-ChildItem publish/*.nupkg | Select-Object -First 1
+          $version = $package.BaseName -replace "^AbleKit\.", ""
+          if ($tag -ne $version) {
+            throw "Tag v$tag does not match package version $version. Bump <Version> in src/AbleKit/AbleKit.csproj and retag."
+          }
+      - name: NuGet login (OIDC → temporary API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }} # the nuget.org profile name, not the email address
+      - run: dotnet nuget push publish/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: publish/*.nupkg
+          generate_release_notes: true

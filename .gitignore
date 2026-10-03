@@ -5,3 +5,5 @@ obj/
 .idea/
 artifacts/
 **/TestResults/
+
+/publish/
