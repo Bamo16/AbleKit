@@ -21,7 +21,10 @@ jobs:
       - run: dotnet pack src/AbleKit/AbleKit.csproj --configuration Release --output publish
       # The tag is the source of truth for the version Live sees on NuGet; Directory.Build.props
       # and the csproj's <Version> are for local packs and must be bumped to match before tagging.
+      # Also resolves the package's literal path: PowerShell, unlike bash, does not glob-expand
+      # a bare `*` for a native command's arguments, so later steps cannot just pass publish/*.nupkg.
       - name: Check the tag matches the package version
+        id: package
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}".TrimStart("v")
@@ -30,12 +33,13 @@ jobs:
           if ($tag -ne $version) {
             throw "Tag v$tag does not match package version $version. Bump <Version> in src/AbleKit/AbleKit.csproj and retag."
           }
+          "path=$($package.FullName)" >> $env:GITHUB_OUTPUT
       - name: NuGet login (OIDC → temporary API key)
         uses: NuGet/login@v1
         id: login
         with:
           user: ${{ secrets.NUGET_USER }} # the nuget.org profile name, not the email address
-      - run: dotnet nuget push publish/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - run: dotnet nuget push "${{ steps.package.outputs.path }}" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
       - uses: softprops/action-gh-release@v2
         with:
           files: publish/*.nupkg
