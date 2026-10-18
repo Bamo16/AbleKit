@@ -220,6 +220,8 @@ AbleKit.Tags.FileIndexReader.Read(string! folder) -> AbleKit.Tags.FolderInfo!
 AbleKit.Tags.FileIndexReader.ReadKnownKeywords() -> System.Collections.Generic.IReadOnlySet<string!>!
 AbleKit.Tags.FileTags
 AbleKit.Tags.FileTags.<Clone>$() -> AbleKit.Tags.FileTags!
+AbleKit.Tags.FileTags.Collections.get -> System.Collections.Generic.IReadOnlyList<int>!
+AbleKit.Tags.FileTags.Collections.init -> void
 AbleKit.Tags.FileTags.Equals(AbleKit.Tags.FileTags? other) -> bool
 AbleKit.Tags.FileTags.FileTags() -> void
 AbleKit.Tags.FileTags.HiddenKeywords.get -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -243,8 +245,10 @@ AbleKit.Tags.FolderInfoWriter.Rename(string! folder, System.Collections.Generic.
 AbleKit.Tags.KeyTags
 AbleKit.Tags.TagAssignment
 AbleKit.Tags.TagAssignment.<Clone>$() -> AbleKit.Tags.TagAssignment!
+AbleKit.Tags.TagAssignment.Collections.get -> System.Collections.Generic.IReadOnlyList<int>?
+AbleKit.Tags.TagAssignment.Collections.init -> void
 AbleKit.Tags.TagAssignment.Equals(AbleKit.Tags.TagAssignment? other) -> bool
-AbleKit.Tags.TagAssignment.Keywords.get -> System.Collections.Generic.IReadOnlyList<string!>!
+AbleKit.Tags.TagAssignment.Keywords.get -> System.Collections.Generic.IReadOnlyList<string!>?
 AbleKit.Tags.TagAssignment.Keywords.init -> void
 AbleKit.Tags.TagAssignment.RelativePath.get -> string!
 AbleKit.Tags.TagAssignment.RelativePath.init -> void
@@ -342,6 +346,7 @@ static AbleKit.Tags.FileIndexReader.DefaultFolder.get -> string!
 static AbleKit.Tags.FileTags.operator !=(AbleKit.Tags.FileTags? left, AbleKit.Tags.FileTags? right) -> bool
 static AbleKit.Tags.FileTags.operator ==(AbleKit.Tags.FileTags? left, AbleKit.Tags.FileTags? right) -> bool
 static AbleKit.Tags.FolderInfo.Empty(string! folder) -> AbleKit.Tags.FolderInfo!
+static AbleKit.Tags.FolderInfoWriter.IsCollection(int collection) -> bool
 static AbleKit.Tags.FolderInfoWriter.IsWellFormed(string! keyword) -> bool
 static AbleKit.Tags.TagAssignment.operator !=(AbleKit.Tags.TagAssignment? left, AbleKit.Tags.TagAssignment? right) -> bool
 static AbleKit.Tags.TagAssignment.operator ==(AbleKit.Tags.TagAssignment? left, AbleKit.Tags.TagAssignment? right) -> bool

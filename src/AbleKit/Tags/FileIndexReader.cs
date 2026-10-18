@@ -26,7 +26,8 @@ public sealed class FileIndexReader(string indexFolder)
         """;
 
     /// <summary>
-    /// One row per keyword, so a file with three tags arrives as three rows.
+    /// One row per keyword, so a file with three tags arrives as three rows, and one with no keyword
+    /// for a file in a Collection. <c>colors</c> holds bit n for Collection n, and bit 0 always.
     /// </summary>
     private const string TagsSql = """
         WITH RECURSIVE tree(file_id, path) AS (
@@ -37,10 +38,12 @@ public sealed class FileIndexReader(string indexFolder)
             FROM files f
             JOIN tree ON f.parent_id = tree.file_id
         )
-        SELECT tree.path, mv.value
+        SELECT tree.path, f.colors, mv.value
         FROM tree
-        JOIN metadata m ON m.file_id = tree.file_id AND m.key = $keyword
-        JOIN metadata_values mv ON mv.id = m.value_id
+        JOIN files f ON f.file_id = tree.file_id
+        LEFT JOIN metadata m ON m.file_id = tree.file_id AND m.key = $keyword
+        LEFT JOIN metadata_values mv ON mv.id = m.value_id
+        WHERE tree.path <> '' AND (mv.value IS NOT NULL OR f.colors > 1)
         ORDER BY tree.path
         """;
 
@@ -186,10 +189,16 @@ public sealed class FileIndexReader(string indexFolder)
 
         using var reader = command.ExecuteReader();
 
-        var rows = new List<(string Path, string Value)>();
+        var rows = new List<(string Path, long Colors, string? Value)>();
 
         while (reader.Read())
-            rows.Add((reader.GetString(0), reader.GetString(1)));
+            rows.Add(
+                (
+                    reader.GetString(0),
+                    reader.IsDBNull(1) ? 0 : reader.GetInt64(1),
+                    reader.IsDBNull(2) ? null : reader.GetString(2)
+                )
+            );
 
         return
         [
@@ -197,10 +206,14 @@ public sealed class FileIndexReader(string indexFolder)
                 .Select(g => new FileTags
                 {
                     RelativePath = g.Key,
-                    Keywords = [.. g.Select(r => r.Value)],
+                    Keywords = [.. g.Select(r => r.Value).OfType<string>()],
+                    Collections = CollectionsIn(g.First().Colors),
                 }),
         ];
     }
+
+    private static int[] CollectionsIn(long colors) =>
+        [.. Enumerable.Range(1, 7).Where(collection => (colors & (1L << collection)) is not 0)];
 
     /// <summary>
     /// Ableton stores its integer keys as four-character codes — <c>UKey</c> for a user-applied

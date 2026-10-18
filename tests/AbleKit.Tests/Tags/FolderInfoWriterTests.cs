@@ -81,6 +81,104 @@ public sealed class FolderInfoWriterTests : IDisposable
     }
 
     [Fact]
+    public void Collections_replace_the_files_own_and_leave_its_keywords()
+    {
+        _writer.Apply(
+            _root,
+            [
+                new()
+                {
+                    RelativePath = "a.flac",
+                    Keywords = ["Key|A", "Key|Minor"],
+                    Collections = [1, 4],
+                },
+            ]
+        );
+
+        _writer.Apply(_root, [new() { RelativePath = "a.flac", Collections = [6, 2, 2] }]);
+
+        Assert.True(_reader.Read(_root).TryGet("a.flac", out var tags));
+        Assert.Equal([2, 6], tags.Collections);
+        Assert.Equal(["Key|A", "Key|Minor"], tags.Keywords);
+    }
+
+    [Fact]
+    public void Collections_are_written_after_the_path_as_Live_writes_them()
+    {
+        _writer.Apply(_root, [Assign("a.flac", "Key|A", "Key|Minor")]);
+        _writer.Apply(_root, [new() { RelativePath = "a.flac", Collections = [2] }]);
+
+        var entry = XDocument
+            .Load(XmpPath)
+            .Descendants()
+            .Single(element => element.Name.LocalName is "filePath")
+            .Parent!;
+
+        Assert.Equal(
+            ["filePath", "colors", "keywords"],
+            entry.Elements().Select(element => element.Name.LocalName)
+        );
+    }
+
+    [Fact]
+    public void No_Collections_removes_the_element_and_keywords_left_out_stay()
+    {
+        _writer.Apply(
+            _root,
+            [
+                new()
+                {
+                    RelativePath = "a.flac",
+                    Keywords = ["Key|A"],
+                    Collections = [3],
+                },
+            ]
+        );
+
+        _writer.Apply(_root, [new() { RelativePath = "a.flac", Collections = [] }]);
+
+        Assert.DoesNotContain("colors", File.ReadAllText(XmpPath));
+        Assert.True(_reader.Read(_root).TryGet("a.flac", out var tags));
+        Assert.Equal(["Key|A"], tags.Keywords);
+    }
+
+    [Fact]
+    public void A_new_entry_can_hold_Collections_alone()
+    {
+        _writer.Apply(_root, [new() { RelativePath = "a.flac", Collections = [5] }]);
+
+        Assert.True(_reader.Read(_root).TryGet("a.flac", out var tags));
+        Assert.Equal([5], tags.Collections);
+        Assert.Empty(tags.Keywords);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(8)]
+    public void A_Collection_outside_1_to_7_stops_the_whole_write(int collection)
+    {
+        Assert.Throws<ArgumentException>(() =>
+            _writer.Apply(
+                _root,
+                [
+                    Assign("good.flac", "Key|A", "Key|Minor"),
+                    new() { RelativePath = "bad.flac", Collections = [collection] },
+                ]
+            )
+        );
+
+        Assert.False(Directory.Exists(Path.Combine(_root, "Ableton Folder Info")));
+    }
+
+    [Fact]
+    public void An_assignment_with_nothing_to_write_is_refused()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            _writer.Apply(_root, [new() { RelativePath = "a.flac" }])
+        );
+    }
+
+    [Fact]
     public void A_keyword_Live_does_not_know_yet_is_written_as_given()
     {
         // Live spells this key C♯; a user may still want a tag of their own.

@@ -48,6 +48,14 @@ public sealed class FolderInfoReader
             RelativePath = filePath,
             Keywords = Values(item, "keywords"),
             HiddenKeywords = Values(item, "hideKeywords"),
+            Collections =
+            [
+                .. Values(item, "colors")
+                    .Select(value => int.TryParse(value, out var number) ? number : 0)
+                    .Where(FolderInfoWriter.IsCollection)
+                    .Distinct()
+                    .Order(),
+            ],
         };
     }
 

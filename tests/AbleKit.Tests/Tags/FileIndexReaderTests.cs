@@ -7,7 +7,7 @@ namespace AbleKit.Tests.Tags;
 public sealed class FileIndexReaderTests : IDisposable
 {
     private const string Schema = """
-        CREATE TABLE files (file_id INTEGER PRIMARY KEY AUTOINCREMENT, parent_id INTEGER, name TEXT);
+        CREATE TABLE files (file_id INTEGER PRIMARY KEY AUTOINCREMENT, parent_id INTEGER, name TEXT, colors INTEGER DEFAULT 1);
         CREATE TABLE places (file_id INTEGER, folder_kind INTEGER, level INTEGER NOT NULL DEFAULT 0, name TEXT);
         CREATE TABLE metadata (file_id INTEGER, key INTEGER, value_id INTEGER);
         CREATE TABLE metadata_values (id INTEGER PRIMARY KEY AUTOINCREMENT, value TEXT);
@@ -55,6 +55,34 @@ public sealed class FileIndexReaderTests : IDisposable
         Assert.Equal(["Key|A", "Key|Minor"], a1.Keywords.Order());
         Assert.True(info.TryGet(Path.Combine(_root, "Loops", "b.wav"), out var b1));
         Assert.Equal(["Type|Loop"], b1.Keywords);
+    }
+
+    [Fact]
+    public void Collections_are_read_from_the_bits_Live_sets_for_them()
+    {
+        using (var db = Create("Live-files-12300.db"))
+        {
+            var root = Place(db, _root);
+            var tagged = File(db, root, "tagged.flac");
+            var untagged = File(db, root, "untagged.flac");
+            File(db, root, "plain.flac");
+
+            Tag(db, tagged, UserKeyword, "Key|A");
+            Tag(db, tagged, UserKeyword, "Key|Minor");
+            // Measured on Live 12: Collections 2, 3, 5, 6 and 7 read 237, bit 0 always set.
+            Execute(db, $"UPDATE files SET colors = 237 WHERE file_id = {tagged}");
+            Execute(db, $"UPDATE files SET colors = 3 WHERE file_id = {untagged}");
+        }
+
+        var info = new FileIndexReader(_index).Read(_root);
+
+        Assert.True(info.TryGet("tagged.flac", out var tagged1));
+        Assert.Equal([2, 3, 5, 6, 7], tagged1.Collections);
+        Assert.Equal(2, tagged1.Keywords.Count);
+        Assert.True(info.TryGet("untagged.flac", out var untagged1));
+        Assert.Equal([1], untagged1.Collections);
+        Assert.Empty(untagged1.Keywords);
+        Assert.False(info.TryGet("plain.flac", out _));
     }
 
     [Fact]

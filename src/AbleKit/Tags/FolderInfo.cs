@@ -22,7 +22,7 @@ public sealed class FolderInfo(string folder, IReadOnlyList<FileTags> entries)
 
     /// <summary>
     /// Looks up tags by path relative to <see cref="Folder"/>, or by absolute path under
-    /// it. Returns false when the file carries no keywords.
+    /// it. Returns false when the file carries no keywords and is in no Collection.
     /// </summary>
     public bool TryGet(string path, [NotNullWhen(true)] out FileTags? tags)
     {
@@ -35,7 +35,7 @@ public sealed class FolderInfo(string folder, IReadOnlyList<FileTags> entries)
         relativePath.Replace('\\', '/').Trim('/');
 }
 
-/// <summary>The keywords Live holds for a single file.</summary>
+/// <summary>The keywords and Collections Live holds for a single file.</summary>
 public sealed record FileTags
 {
     /// <summary>Path relative to the folder, as Live spells it.</summary>
@@ -49,4 +49,10 @@ public sealed record FileTags
     /// read from the index, always empty.
     /// </summary>
     public IReadOnlyList<string> HiddenKeywords { get; init; } = [];
+
+    /// <summary>
+    /// The browser's Collections the file is in, numbered 1 to 7 from the top of Live's list, in
+    /// ascending order. Live lets the user name them, so the number is all a file records.
+    /// </summary>
+    public IReadOnlyList<int> Collections { get; init; } = [];
 }

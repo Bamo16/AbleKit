@@ -48,7 +48,10 @@ public sealed record Clip
     /// <summary>Detune, in cents.</summary>
     public float PitchFine { get; init; }
 
-    /// <summary>The clip's colour in Live's palette; −1 before the first save.</summary>
+    /// <summary>
+    /// The clip's colour: a cell of Live's 70-colour palette, numbered row by row, 14 to a row, from 0
+    /// at the top left. −1 before the first save, which lets Live pick one at random.
+    /// </summary>
     public int ColorIndex { get; init; } = -1;
 
     /// <summary>The clip's launch mode, as Live numbers it.</summary>

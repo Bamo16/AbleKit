@@ -160,7 +160,8 @@ permitted. One Live was writing at that moment throws a
 `TagStoreChangedException`, which is an `IOException`; reading again fixes it.
 
 Keywords are raw, as Live writes them: `Category|Value`, or deeper for Live's nested tags
-(`Drums|Cymbal|Crash`). When the two sources disagree, the index is what Live's browser shows; the
+(`Drums|Cymbal|Crash`). `Collections` holds the browser's coloured Collections the file is in,
+numbered 1 to 7 from the top of Live's list; their names are yours and live elsewhere. When the two sources disagree, the index is what Live's browser shows; the
 XMP can lag behind it, sometimes indefinitely.
 
 ## Write tags
@@ -199,6 +200,9 @@ What the writer does:
 
 - **It replaces a file's keywords** with the ones given. It does not add to them. Read the entry
   first and merge if you want to keep what is there.
+- **Collections work the same way**: `Collections = [2, 5]` puts the file in exactly those, and
+  `[]` takes it out of all of them. Leave `Keywords` or `Collections` null to keep what the file
+  has. A number outside 1 to 7 throws an `ArgumentException`, and nothing is written.
 - **It leaves every other entry alone**, in its place, and never touches hidden keywords.
 - **It writes all or nothing.** A keyword that is not `Category|Value` throws an `ArgumentException`
   and nothing is written; `FolderInfoWriter.IsWellFormed` checks one first. Any well-formed keyword

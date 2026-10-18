@@ -5,7 +5,7 @@ using System.Xml.Linq;
 namespace AbleKit.Tags;
 
 /// <summary>
-/// Writes keywords into a folder's <c>Ableton Folder Info\&lt;uuid&gt;.xmp</c>, alongside whatever
+/// Writes keywords and Collections into a folder's <c>Ableton Folder Info\&lt;uuid&gt;.xmp</c>, alongside whatever
 /// Live has put there.
 /// </summary>
 public sealed class FolderInfoWriter
@@ -30,13 +30,14 @@ public sealed class FolderInfoWriter
     };
 
     /// <summary>
-    /// Applies keywords to files under <paramref name="folder"/>, leaving every other entry and its
-    /// position alone, and returns how many files were given keywords. A keyword Live does not know
+    /// Applies keywords and Collections to files under <paramref name="folder"/>, leaving every other
+    /// entry and its position alone, and returns how many files it wrote. A keyword Live does not know
     /// yet becomes a new tag; check against <see cref="FileIndexReader.ReadKnownKeywords"/> first to
     /// catch one made by accident.
     /// </summary>
     /// <exception cref="ArgumentException">
-    /// A keyword is not well-formed (see <see cref="IsWellFormed"/>). Nothing is written.
+    /// An assignment gives neither keywords nor Collections, a keyword is not well-formed (see
+    /// <see cref="IsWellFormed"/>), or a Collection is not 1 to 7. Nothing is written.
     /// </exception>
     /// <exception cref="TagStoreChangedException">
     /// Live was writing the store, or changed it after it was read. Nothing is written; try again.
@@ -49,10 +50,28 @@ public sealed class FolderInfoWriter
             return 0;
 
         if (
-            assignments.SelectMany(a => a.Keywords).FirstOrDefault(k => !IsWellFormed(k)) is { } bad
+            assignments.FirstOrDefault(a => a is { Keywords: null, Collections: null }) is { } empty
+        )
+            throw new ArgumentException(
+                $"The assignment for '{empty.RelativePath}' gives neither keywords nor Collections",
+                nameof(assignments)
+            );
+
+        if (
+            assignments.SelectMany(a => a.Keywords ?? []).FirstOrDefault(k => !IsWellFormed(k)) is
+            { } bad
         )
             throw new ArgumentException(
                 $"'{bad}' is not a Category|Value keyword",
+                nameof(assignments)
+            );
+
+        if (
+            assignments.SelectMany(a => a.Collections ?? []).Where(c => !IsCollection(c)).ToArray()
+            is [var outside, ..]
+        )
+            throw new ArgumentException(
+                $"{outside} is not one of Live's Collections, which are 1 to 7",
                 nameof(assignments)
             );
 
@@ -121,6 +140,9 @@ public sealed class FolderInfoWriter
         keyword.Split('|') is [_, _, ..] parts
         && parts.All(part => part.Length > 0 && part.Trim() == part);
 
+    /// <summary>Whether a number is one of Live's seven Collections, 1 at the top of its list.</summary>
+    public static bool IsCollection(int collection) => collection is >= 1 and <= 7;
+
     /// <summary>
     /// Writes to a temporary file beside the target and swaps it in, but only if nothing has
     /// touched the target since it was read. Narrows the race with Ableton; does not close it.
@@ -166,28 +188,43 @@ public sealed class FolderInfoWriter
 
     private static void ApplyOne(XElement items, TagAssignment assignment)
     {
-        var bag = new XElement(
-            Rdf + "Bag",
-            assignment.Keywords.Select(k => new XElement(Rdf + "li", k))
-        );
+        var entry = Find(items, assignment.RelativePath);
 
-        if (Find(items, assignment.RelativePath) is { } existing)
+        if (entry is null)
         {
-            existing.Element(AblFr + "keywords")?.Remove();
-            existing.Add(new XElement(AblFr + "keywords", bag));
-
-            return;
-        }
-
-        items.Add(
-            new XElement(
+            entry = new XElement(
                 Rdf + "li",
                 new XAttribute(Rdf + "parseType", "Resource"),
-                new XElement(AblFr + "filePath", assignment.RelativePath),
-                new XElement(AblFr + "keywords", bag)
-            )
-        );
+                new XElement(AblFr + "filePath", assignment.RelativePath)
+            );
+            items.Add(entry);
+        }
+
+        if (assignment.Keywords is { } keywords)
+        {
+            entry.Element(AblFr + "keywords")?.Remove();
+            entry.Add(new XElement(AblFr + "keywords", Bag(keywords)));
+        }
+
+        if (assignment.Collections is { } collections)
+        {
+            entry.Element(AblFr + "colors")?.Remove();
+
+            // Live writes the Collections straight after the path, and none at all for a file in none.
+            if (collections.Count > 0)
+                entry
+                    .Element(AblFr + "filePath")
+                    ?.AddAfterSelf(
+                        new XElement(
+                            AblFr + "colors",
+                            Bag(collections.Distinct().Order().Select(c => $"{c}"))
+                        )
+                    );
+        }
     }
+
+    private static XElement Bag(IEnumerable<string> values) =>
+        new(Rdf + "Bag", values.Select(value => new XElement(Rdf + "li", value)));
 
     private static XElement? Find(XElement items, string relativePath) =>
         items
@@ -246,14 +283,23 @@ public sealed class FolderInfoWriter
         );
 }
 
-/// <summary>Keywords to put on one file, named the way Ableton names it.</summary>
+/// <summary>Keywords and Collections to put on one file, named the way Ableton names it.</summary>
 public sealed record TagAssignment
 {
     /// <summary>The file's path relative to the folder.</summary>
     public required string RelativePath { get; init; }
 
-    /// <summary>Every keyword the file should carry, as <c>Category|Value</c>, replacing what it has.</summary>
-    public required IReadOnlyList<string> Keywords { get; init; }
+    /// <summary>
+    /// Every keyword the file should carry, as <c>Category|Value</c>, replacing what it has; null
+    /// leaves its keywords as they are.
+    /// </summary>
+    public IReadOnlyList<string>? Keywords { get; init; }
+
+    /// <summary>
+    /// Every Collection the file should be in, 1 to 7, replacing what it is in; empty takes it out of
+    /// all of them, and null leaves them as they are.
+    /// </summary>
+    public IReadOnlyList<int>? Collections { get; init; }
 }
 
 /// <summary>One entry's move to a new name, both relative to the folder.</summary>
