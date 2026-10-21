@@ -6,6 +6,8 @@ namespace AbleKit.Tests.Tags;
 /// <summary>The reader against a database laid out like Live 12's, holding only the tables it reads.</summary>
 public sealed class FileIndexReaderTests : IDisposable
 {
+    private const string WindowsPaths = "Live's index joins paths with Windows separators.";
+
     private const string Schema = """
         CREATE TABLE files (file_id INTEGER PRIMARY KEY AUTOINCREMENT, parent_id INTEGER, name TEXT, colors INTEGER DEFAULT 1);
         CREATE TABLE places (file_id INTEGER, folder_kind INTEGER, level INTEGER NOT NULL DEFAULT 0, name TEXT);
@@ -37,6 +39,8 @@ public sealed class FileIndexReaderTests : IDisposable
     [Fact]
     public void Reads_each_files_user_keywords_under_the_root()
     {
+        Assert.SkipUnless(OperatingSystem.IsWindows(), WindowsPaths);
+
         using (var db = Create("Live-files-12300.db"))
         {
             var root = Place(db, _root);
@@ -60,6 +64,8 @@ public sealed class FileIndexReaderTests : IDisposable
     [Fact]
     public void Collections_are_read_from_the_bits_Live_sets_for_them()
     {
+        Assert.SkipUnless(OperatingSystem.IsWindows(), WindowsPaths);
+
         using (var db = Create("Live-files-12300.db"))
         {
             var root = Place(db, _root);
@@ -148,6 +154,8 @@ public sealed class FileIndexReaderTests : IDisposable
     [Fact]
     public void The_database_last_written_is_the_one_read()
     {
+        Assert.SkipUnless(OperatingSystem.IsWindows(), WindowsPaths);
+
         using (var old = Create("Live-files-12300.db"))
             Tag(old, File(old, Place(old, _root), "a.flac"), UserKeyword, "Key|C");
 

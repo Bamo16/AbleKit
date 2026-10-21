@@ -142,6 +142,11 @@ public sealed class LiveSetsTests : IDisposable
     [InlineData("what?")]
     public void A_backup_label_that_cannot_go_in_a_file_name_throws(string label)
     {
+        Assert.SkipWhen(
+            label.Contains('?') && !OperatingSystem.IsWindows(),
+            "Only Windows forbids '?' in a file name."
+        );
+
         Assert.Throws<ArgumentException>(
             "backupLabel",
             () => _sets.Relink([new($"{Library}/A.flac", $"{Library}/B.flac")], label)

@@ -259,6 +259,11 @@ public sealed class FolderInfoWriterTests : IDisposable
     [Fact]
     public void A_store_another_program_holds_throws_and_leaves_no_temporary_file()
     {
+        Assert.SkipUnless(
+            OperatingSystem.IsWindows(),
+            "Only Windows refuses a file another program holds."
+        );
+
         _writer.Apply(_root, [Assign("a.flac", "Key|A", "Key|Minor")]);
 
         using (new FileStream(XmpPath, FileMode.Open, FileAccess.Read, FileShare.Read))
