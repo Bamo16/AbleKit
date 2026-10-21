@@ -28,10 +28,15 @@ public sealed class AnalysisFileRealLibraryTests
     }
 
     [Fact]
-    public void A_saved_default_clip_and_warp_markers_come_together()
+    public void A_saved_warped_clip_and_warp_markers_come_together()
     {
+        // A saved clip with Warp off needs no markers, and Live applies one as written.
         var disagreeing = Warps()
-            .Where(s => s.Analysis.DefaultClip is null == s.Analysis.Warp.Markers.Count > 0)
+            .Where(s =>
+                s.Analysis.DefaultClip is null
+                    ? s.Analysis.Warp.Markers.Count > 0
+                    : s.Analysis.Warp is { IsWarped: true, Markers.Count: 0 }
+            )
             .Select(s => s.File)
             .ToList();
 
