@@ -37,8 +37,8 @@ AbleKit.Analysis.AudioAnalysis.UserOnsets.init -> void
 AbleKit.Analysis.Clip
 AbleKit.Analysis.Clip.<Clone>$() -> AbleKit.Analysis.Clip!
 AbleKit.Analysis.Clip.Clip() -> void
-AbleKit.Analysis.Clip.ColorIndex.get -> int
-AbleKit.Analysis.Clip.ColorIndex.init -> void
+AbleKit.Analysis.Clip.Color.get -> AbleKit.Analysis.ClipColor
+AbleKit.Analysis.Clip.Color.init -> void
 AbleKit.Analysis.Clip.Equals(AbleKit.Analysis.Clip? other) -> bool
 AbleKit.Analysis.Clip.Fade.get -> bool
 AbleKit.Analysis.Clip.Fade.init -> void
@@ -50,8 +50,8 @@ AbleKit.Analysis.Clip.HiddenLoopStart.get -> double
 AbleKit.Analysis.Clip.HiddenLoopStart.init -> void
 AbleKit.Analysis.Clip.LaunchMode.get -> int
 AbleKit.Analysis.Clip.LaunchMode.init -> void
-AbleKit.Analysis.Clip.LaunchQuantisation.get -> int
-AbleKit.Analysis.Clip.LaunchQuantisation.init -> void
+AbleKit.Analysis.Clip.LaunchQuantization.get -> int
+AbleKit.Analysis.Clip.LaunchQuantization.init -> void
 AbleKit.Analysis.Clip.LoopEnd.get -> double
 AbleKit.Analysis.Clip.LoopEnd.init -> void
 AbleKit.Analysis.Clip.LoopOn.get -> bool
@@ -72,6 +72,10 @@ AbleKit.Analysis.Clip.Sync.get -> bool
 AbleKit.Analysis.Clip.Sync.init -> void
 AbleKit.Analysis.Clip.VelocityAmount.get -> float
 AbleKit.Analysis.Clip.VelocityAmount.init -> void
+AbleKit.Analysis.ClipColor
+AbleKit.Analysis.ClipColor.ClipColor() -> void
+AbleKit.Analysis.ClipColor.Equals(AbleKit.Analysis.ClipColor other) -> bool
+AbleKit.Analysis.ClipColor.Index.get -> int
 AbleKit.Analysis.DefaultClip
 AbleKit.Analysis.DefaultClip.<Clone>$() -> AbleKit.Analysis.DefaultClip!
 AbleKit.Analysis.DefaultClip.Deconstruct(out double Start, out double End) -> void
@@ -274,6 +278,9 @@ override AbleKit.Analysis.AudioAnalysis.ToString() -> string!
 override AbleKit.Analysis.Clip.Equals(object? obj) -> bool
 override AbleKit.Analysis.Clip.GetHashCode() -> int
 override AbleKit.Analysis.Clip.ToString() -> string!
+override AbleKit.Analysis.ClipColor.GetHashCode() -> int
+~override AbleKit.Analysis.ClipColor.Equals(object obj) -> bool
+~override AbleKit.Analysis.ClipColor.ToString() -> string
 override AbleKit.Analysis.DefaultClip.Equals(object? obj) -> bool
 override AbleKit.Analysis.DefaultClip.GetHashCode() -> int
 override AbleKit.Analysis.DefaultClip.ToString() -> string!
@@ -319,6 +326,11 @@ static AbleKit.Analysis.AudioAnalysis.operator !=(AbleKit.Analysis.AudioAnalysis
 static AbleKit.Analysis.AudioAnalysis.operator ==(AbleKit.Analysis.AudioAnalysis? left, AbleKit.Analysis.AudioAnalysis? right) -> bool
 static AbleKit.Analysis.Clip.operator !=(AbleKit.Analysis.Clip? left, AbleKit.Analysis.Clip? right) -> bool
 static AbleKit.Analysis.Clip.operator ==(AbleKit.Analysis.Clip? left, AbleKit.Analysis.Clip? right) -> bool
+static AbleKit.Analysis.ClipColor.At(int row, int column) -> AbleKit.Analysis.ClipColor
+static AbleKit.Analysis.ClipColor.FromIndex(int index) -> AbleKit.Analysis.ClipColor
+static AbleKit.Analysis.ClipColor.operator !=(AbleKit.Analysis.ClipColor left, AbleKit.Analysis.ClipColor right) -> bool
+static AbleKit.Analysis.ClipColor.operator ==(AbleKit.Analysis.ClipColor left, AbleKit.Analysis.ClipColor right) -> bool
+static AbleKit.Analysis.ClipColor.Random.get -> AbleKit.Analysis.ClipColor
 static AbleKit.Analysis.DefaultClip.operator !=(AbleKit.Analysis.DefaultClip? left, AbleKit.Analysis.DefaultClip? right) -> bool
 static AbleKit.Analysis.DefaultClip.operator ==(AbleKit.Analysis.DefaultClip? left, AbleKit.Analysis.DefaultClip? right) -> bool
 static AbleKit.Analysis.SampleOverview.FromSamples(System.ReadOnlySpan<float> samples, int channelCount) -> AbleKit.Analysis.SampleOverview!

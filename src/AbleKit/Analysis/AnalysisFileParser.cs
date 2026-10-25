@@ -35,7 +35,7 @@ internal static class AnalysisFileParser
     private static readonly byte[] HeadTrailerStart = [0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0];
     private static readonly byte[] SampleDataTag = [0x00, 0x0A, .. "SampleData"u8];
 
-    /// <summary>Reads the file, or says why it is not one this library recognises.</summary>
+    /// <summary>Reads the file, or says why it is not one this library recognizes.</summary>
     internal static bool TryParse(
         ReadOnlySpan<byte> asd,
         [NotNullWhen(true)] out AnalysisFile? analysis,
@@ -78,9 +78,9 @@ internal static class AnalysisFileParser
             VelocityAmount = fields.Float("VelocityAmount.Value"),
             PitchCoarse = fields.Float("PitchCoarse.Value"),
             PitchFine = fields.Float("PitchFine.Value"),
-            ColorIndex = fields.Int32("ColorIndex.Value"),
+            Color = ClipColor.FromIndex(fields.Int32("ColorIndex.Value")),
             LaunchMode = fields.Int32("LaunchMode.Value"),
-            LaunchQuantisation = fields.Int32("LaunchQuantisation.Value"),
+            LaunchQuantization = fields.Int32("LaunchQuantisation.Value"),
         };
 
         var warp = new Warp

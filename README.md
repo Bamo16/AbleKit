@@ -58,7 +58,7 @@ if (AnalysisFile.TryRead(@"C:\Samples\Break.wav.asd", out var analysis))
 
 An `AnalysisFile` holds everything in the file, in three parts named after what Live shows:
 
-- **`Clip`**: the clip's start and end, its loop, gain, transpose and detune, HiQ, Fade, colour and
+- **`Clip`**: the clip's start and end, its loop, gain, transpose and detune, HiQ, Fade, color and
   launch settings;
 - **`Warp`**: the warp markers, the warp mode and every mode's settings, and the time signature;
 - **`Audio`**: what Live measured in the audio: the waveform overview, the transients, and the file's
@@ -99,9 +99,9 @@ raised.Write(@"C:\Samples\Break (up 1).wav.asd");
   permitted, and nothing is written.
 - `ToBytes()` gives the bytes without writing them.
 
-## Write one for audio Live has not analysed
+## Write one for audio Live has not analyzed
 
-Live only analyses a sample once you open it, and only warps it once you save its default clip.
+Live only analyzes a sample once you open it, and only warps it once you save its default clip.
 `AudioAnalysis.FromSamples` builds what Live would have measured, from samples you decode yourself
 (ffmpeg's `-f f32le`, NAudio, …): the waveform overview, drawn bit for bit as Live draws it, and the
 transients you give it. The library does not detect transients.
@@ -160,7 +160,7 @@ permitted. One Live was writing at that moment throws a
 `TagStoreChangedException`, which is an `IOException`; reading again fixes it.
 
 Keywords are raw, as Live writes them: `Category|Value`, or deeper for Live's nested tags
-(`Drums|Cymbal|Crash`). `Collections` holds the browser's coloured Collections the file is in,
+(`Drums|Cymbal|Crash`). `Collections` holds the browser's colored Collections the file is in,
 numbered 1 to 7 from the top of Live's list; their names are yours and live elsewhere. When the two sources disagree, the index is what Live's browser shows; the
 XMP can lag behind it, sometimes indefinitely.
 
@@ -258,7 +258,7 @@ What the relink does:
 | XMP tags | reads, writes | | reads, writes | | |
 | Hidden keywords | reads | | | | |
 | Live's file index | reads | | | | |
-| Licence | MIT | MIT | MIT | MIT | none |
+| License | MIT | MIT | MIT | MIT | none |
 
 ## Tested on
 
@@ -273,7 +273,7 @@ environment variables point at one:
 
 | variable | holds |
 |---|---|
-| `ABLEKIT_SAMPLE_FOLDERS` | folders Live has analysed and tagged, separated by `;` |
+| `ABLEKIT_SAMPLE_FOLDERS` | folders Live has analyzed and tagged, separated by `;` |
 | `ABLEKIT_PROJECTS_FOLDER` | a folder of Live sets; they are only read, and relinked as copies |
 
 ## Maintenance
@@ -281,7 +281,7 @@ environment variables point at one:
 Built for my own use. Issues are welcome; fixes are best-effort. A pull request with a fixture that
 reproduces the problem is the fastest route.
 
-## Licence
+## License
 
 [MIT](LICENSE). The test fixture `sidecar-loop-on.asd` is from
-[DBraun/AbletonParsing](https://github.com/DBraun/AbletonParsing), MIT, with its licence beside it.
+[DBraun/AbletonParsing](https://github.com/DBraun/AbletonParsing), MIT, with its license beside it.

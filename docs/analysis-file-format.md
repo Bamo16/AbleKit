@@ -1,6 +1,6 @@
 # The Ableton Live 12 analysis file (`.asd`)
 
-Live writes an analysis file beside every sample it analyses: `Kick.wav` gets `Kick.wav.asd`.
+Live writes an analysis file beside every sample it analyzes: `Kick.wav` gets `Kick.wav.asd`.
 It holds the waveform overview Live draws, the transients it detected, and, once you press
 **Save Default Clip**, how the sample is warped: the warp markers, the warp mode, and where the
 clip starts and ends.
@@ -24,7 +24,7 @@ The files measured:
 
 | set | files | Live |
 |---|---|---|
-| The author's sample library (stems of commercial tracks, analysed on Windows) | 947 | 12.3 to 12.4 |
+| The author's sample library (stems of commercial tracks, analyzed on Windows) | 947 | 12.3 to 12.4 |
 | [DBraun/AbletonParsing](https://github.com/DBraun/AbletonParsing)'s Live 12 test pair, identical except for the clip's Loop switch | 2 | 12 |
 
 All 947 library files parse to their last byte with the rules on this page (measured, 2026-09-30,
@@ -152,7 +152,7 @@ Units of **beats** are positions on Live's grid, counted from the sample's beat 
 | `SampleVolume` | float32, linear | clip gain: 20 × log₁₀ of it is the clip view's dB. Whole decibels, −8 to +5, on the five of 981 files where it is not 1.0 (measured, 2026-10-01) |
 | `PitchCoarse`, `PitchFine` | float32 | transpose in semitones and detune in cents, the two boxes under the Pitch knob (observed, 2026-10-01). 0 in all 981 library files |
 | `VelocityAmount` | float32 | guessed by name: a Session clip's launch velocity. 0 everywhere |
-| `ColorIndex` | int32 | clip colour; −1 before the first save (observed) |
+| `ColorIndex` | int32 | clip color; −1 before the first save (observed) |
 | `LaunchMode`, `LaunchQuantisation` | int32 | guessed by name |
 | `LoopOn` | bool | the Loop switch (measured: the only field that differs within the DBraun pair) |
 
@@ -190,7 +190,7 @@ exactly on each click's first frame.
 **121 of the library's 959 saved warps show no transients** (measured, 2026-10-01): their
 `HasUserOnsets` is on, but their list holds only the volatile onsets under the warp markers. They
 were all saved since August 2026. *Reset Transients* in the clip view fixes one (observed). What
-causes it is not known; a save during Live's grey decoding pass is a guess.
+causes it is not known; a save during Live's gray decoding pass is a guess.
 
 **A volatile onset is the transient Live adds under a warp marker** (measured): 15,469 of the
 library's 15,474 volatile onsets sit exactly on a marker's time, all with energy `double.MaxValue`.
@@ -209,7 +209,7 @@ files). The second chunk repeats it exactly, in all 983.
 | field | type | meaning |
 |---|---|---|
 | `ExtraLength` | int32 | 0 everywhere |
-| `OriginalFileSize` | int32, bytes | the audio's size when it was analysed (measured: matches on 952 of 969, 2026-10-01). Live does not re-analyse a file whose audio later changed: the other 17 still draw the waveform of audio since replaced |
+| `OriginalFileSize` | int32, bytes | the audio's size when it was analyzed (measured: matches on 952 of 969, 2026-10-01). Live does not re-analyse a file whose audio later changed: the other 17 still draw the waveform of audio since replaced |
 | `OverView.OverViewLevels` | list of float16 arrays | **the waveform**: a minimum and a maximum per channel per bin, interleaved (min₀ max₀ min₁ max₁), as float16 **truncated toward zero**. Each coarser level is the minimum and maximum over the finer level's bins. Reproduced bit for bit from the decoded audio, a WAV and a 24-bit FLAC, at every level (measured, 2026-10-01) |
 | `OverView.SamplesPerBinLog2` | int32 | level *k*'s bin is 2^(`SamplesPerBinLog2` × (*k* + 1)) samples. 7 up to 16,716,224 frames, 8 from 17,070,528 (measured, 983 files): consistent with 7 up to 2^24 frames, about 6:20 at 44.1 kHz. The levels go on until one has a single bin (measured, 983 files) |
 | `OverView.ChannelCount`, `.Version` | int32 | the channels, and 2 everywhere |
@@ -246,7 +246,7 @@ start) and **`BeatTime`** (the grid position it is pinned to). That is all.
   than adding one. Typing a *Seg. BPM* sets the segment ending at the selected marker and leaves the
   hidden one where it was, so the tempo past the last marker does not follow.
 - **Nothing is written until *Save Default Clip*.** Pressing Warp and warping a sample fully left
-  the file byte for byte unchanged; the save wrote the markers, the clip, the colour and the saved
+  the file byte for byte unchanged; the save wrote the markers, the clip, the color and the saved
   byte, and rewrote the files of every sample warped with it as a group (observed). A file without
   markers is therefore either unwarped or a warp in progress, and the two cannot be told apart on
   disk.
@@ -285,9 +285,9 @@ What Live does with files it did not write (observed, 2026-09-15 to 2026-10-01):
   ignored entirely: the sample came in unwarped.
 - **Live does not check that the file belongs to its audio.** A sibling's file, copied unchanged
   beside a vocal stem, was accepted and warped it correctly, but Live drew the sibling's waveform
-  and transients and never re-analysed. A writer has to guarantee the right file itself.
+  and transients and never re-analyzed. A writer has to guarantee the right file itself.
 - **The analysis has to be there.** The sibling's file cut short after the warp section, with or
-  without the head's table, was rejected: Live re-analysed the audio, overwrote the file and lost
+  without the head's table, was rejected: Live re-analyzed the audio, overwrote the file and lost
   the warp.
 - **A recomputed overview is accepted.** The sibling's complete file with the overview rebuilt
   from the stem's own audio warped, played cleanly and showed the stem's waveform. Only the
@@ -302,12 +302,12 @@ What Live does with files it did not write (observed, 2026-09-15 to 2026-10-01):
   the same, in Complex mode.
 - **Marker ids can be numbered afresh.** The same file with its markers' ids 7 and 5 renumbered 0
   and 1, and the allocator set to 2, behaved the same.
-- **Live did not rewrite any of these files** on loading them, nor on the grey-to-black pass when
+- **Live did not rewrite any of these files** on loading them, nor on the gray-to-black pass when
   clips are moved, which is most likely its decoding cache.
 - **A marker list can be replaced in place.** Swapping one file's marker run and its id allocator
   for another's was enough; there are no offsets to fix.
 
-**Live never analyses a file nobody has opened**: 75 of the 96 audio files in a staging folder
+**Live never analyzes a file nobody has opened**: 75 of the 96 audio files in a staging folder
 had no analysis file (measured, 2026-10-01). Making a sample arrive warped therefore means writing
 the whole file, transients included.
 

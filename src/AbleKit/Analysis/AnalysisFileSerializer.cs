@@ -196,7 +196,7 @@ internal static class AnalysisFileSerializer
         file.Float(warp.TimeSignature.Numerator);
         file.Float(warp.TimeSignature.Denominator);
         file.Double(warp.TimeSignature.Time);
-        file.Int32(clip.ColorIndex);
+        file.Int32(clip.Color.Index);
 
         // A list: the next id, then each element's class name, id and fields, then an empty name.
         // Ids are numbered afresh, as Live numbers a warp it has just made.
@@ -215,7 +215,7 @@ internal static class AnalysisFileSerializer
         file.Bool(warp.MarkersGenerated);
         file.Int32(clip.LaunchMode);
         file.Bool(clip.LoopOn);
-        file.Int32(clip.LaunchQuantisation);
+        file.Int32(clip.LaunchQuantization);
 
         file.Array([.. audio.Transients.Select(transient => transient.Position)]);
         file.Array([.. audio.Transients.Select(transient => transient.Energy)]);
@@ -309,6 +309,12 @@ internal static class AnalysisFileSerializer
     private static void Validate(AnalysisFile analysis)
     {
         var markers = analysis.Warp.Markers;
+
+        // Live ignores a saved clip that is warped but has no markers, gain and color included.
+        if (analysis is { IsDefaultClipSaved: true, Warp: { IsWarped: true, Markers.Count: < 2 } })
+            throw new InvalidOperationException(
+                "a saved clip with Warp on needs at least 2 warp markers: Live ignores it otherwise"
+            );
 
         for (var i = 1; i < markers.Count; i++)
         {

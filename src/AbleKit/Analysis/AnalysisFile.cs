@@ -47,7 +47,7 @@ public sealed record AnalysisFile
     /// <exception cref="IOException">The file is locked by another program. Trying again may help.</exception>
     /// <exception cref="UnauthorizedAccessException">Reading the file is not permitted.</exception>
     /// <exception cref="InvalidDataException">
-    /// The file is not an analysis file this library recognises: cut short, or laid out differently, as
+    /// The file is not an analysis file this library recognizes: cut short, or laid out differently, as
     /// a Live version other than 12 may write it. The message says where reading gave up.
     /// </exception>
     public static AnalysisFile Read(string path) => Parse(File.ReadAllBytes(path));
@@ -59,7 +59,7 @@ public sealed record AnalysisFile
     /// <exception cref="IOException">The file is locked by another program. Trying again may help.</exception>
     /// <exception cref="UnauthorizedAccessException">Reading the file is not permitted.</exception>
     /// <exception cref="InvalidDataException">
-    /// The file is not an analysis file this library recognises. The message says where reading gave up.
+    /// The file is not an analysis file this library recognizes. The message says where reading gave up.
     /// </exception>
     public static bool TryRead(string path, [NotNullWhen(true)] out AnalysisFile? analysis)
     {
@@ -83,7 +83,7 @@ public sealed record AnalysisFile
 
     /// <summary>Reads an analysis file already in memory.</summary>
     /// <exception cref="InvalidDataException">
-    /// The bytes are not an analysis file this library recognises. The message says where reading gave up.
+    /// The bytes are not an analysis file this library recognizes. The message says where reading gave up.
     /// </exception>
     public static AnalysisFile Parse(ReadOnlySpan<byte> asd) =>
         AnalysisFileParser.TryParse(asd, out var analysis, out var reason)
@@ -92,7 +92,7 @@ public sealed record AnalysisFile
 
     /// <summary>
     /// Reads an analysis file already in memory, or returns false when it is not one this library
-    /// recognises. <see cref="Parse"/> says why.
+    /// recognizes. <see cref="Parse"/> says why.
     /// </summary>
     public static bool TryParse(
         ReadOnlySpan<byte> asd,
@@ -105,7 +105,8 @@ public sealed record AnalysisFile
     /// file whose name it carries plus <c>.asd</c>.
     /// </summary>
     /// <exception cref="InvalidOperationException">
-    /// The file holds something Live could not have written; see <see cref="ToBytes"/>. Nothing is written.
+    /// The file holds something Live could not have written, such as a saved clip with Warp on and
+    /// fewer than 2 warp markers, which Live ignores; see <see cref="ToBytes"/>. Nothing is written.
     /// </exception>
     /// <exception cref="DirectoryNotFoundException">The folder is not there. Nothing is written.</exception>
     /// <exception cref="IOException">The file is locked by another program. Nothing is written.</exception>
@@ -134,7 +135,8 @@ public sealed record AnalysisFile
     /// bytes, except that the warp markers' internal ids are numbered afresh.
     /// </summary>
     /// <exception cref="InvalidOperationException">
-    /// The markers do not advance, the transients go backwards, or the overview is not one Live could draw.
+    /// The markers do not advance, a saved clip with Warp on has fewer than 2 markers (Live ignores
+    /// it), the transients go backwards, or the overview is not one Live could draw.
     /// </exception>
     public byte[] ToBytes() => AnalysisFileSerializer.Serialize(this);
 }

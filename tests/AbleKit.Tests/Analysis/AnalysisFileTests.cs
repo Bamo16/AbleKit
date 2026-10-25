@@ -215,7 +215,11 @@ public sealed class AnalysisFileTests : IDisposable
             )
         );
 
-        var cleared = analysis with { Warp = analysis.Warp with { Markers = [] } };
+        var cleared = analysis with
+        {
+            IsDefaultClipSaved = false,
+            Warp = analysis.Warp with { Markers = [] },
+        };
 
         Assert.True(AnalysisFile.TryParse(cleared.ToBytes(), out var reread));
         Assert.Empty(reread.Warp.Markers);
@@ -263,6 +267,63 @@ public sealed class AnalysisFileTests : IDisposable
         };
 
         Assert.Throws<InvalidOperationException>(truncated.ToBytes);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void A_warped_saved_clip_with_fewer_than_two_markers_is_refused(int markers)
+    {
+        var clicks = Clicks();
+        var invalid = clicks with
+        {
+            IsDefaultClipSaved = true,
+            Warp = clicks.Warp with
+            {
+                IsWarped = true,
+                Markers = [.. clicks.Warp.Markers.Take(markers)],
+            },
+        };
+        var path = Path.Combine(_root, "refused.asd");
+
+        Assert.Throws<InvalidOperationException>(() => invalid.Write(path));
+        Assert.False(File.Exists(path));
+    }
+
+    [Fact]
+    public void An_unwarped_saved_clip_without_markers_is_written()
+    {
+        var clicks = Clicks();
+        var unwarped = clicks with
+        {
+            IsDefaultClipSaved = true,
+            Warp = clicks.Warp with { IsWarped = false, Markers = [] },
+        };
+        var path = Path.Combine(_root, "unwarped.asd");
+
+        unwarped.Write(path);
+
+        var written = AnalysisFile.Read(path);
+        Assert.False(written.Warp.IsWarped);
+        Assert.Empty(written.Warp.Markers);
+    }
+
+    [Fact]
+    public void A_clip_that_is_not_saved_is_written_without_markers()
+    {
+        var clicks = Clicks();
+        var unsaved = clicks with
+        {
+            IsDefaultClipSaved = false,
+            Warp = clicks.Warp with { IsWarped = true, Markers = [] },
+        };
+        var path = Path.Combine(_root, "unsaved.asd");
+
+        unsaved.Write(path);
+
+        var written = AnalysisFile.Read(path);
+        Assert.False(written.IsDefaultClipSaved);
+        Assert.Empty(written.Warp.Markers);
     }
 
     private static AnalysisFile Clicks() =>

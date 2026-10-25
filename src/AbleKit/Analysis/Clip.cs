@@ -49,14 +49,13 @@ public sealed record Clip
     public float PitchFine { get; init; }
 
     /// <summary>
-    /// The clip's colour: a cell of Live's 70-colour palette, numbered row by row, 14 to a row, from 0
-    /// at the top left. −1 before the first save, which lets Live pick one at random.
+    /// The clip's color, a cell of Live's palette. <see cref="ClipColor.Random"/> before the first save.
     /// </summary>
-    public int ColorIndex { get; init; } = -1;
+    public ClipColor Color { get; init; } = ClipColor.Random;
 
     /// <summary>The clip's launch mode, as Live numbers it.</summary>
     public int LaunchMode { get; init; }
 
-    /// <summary>The clip's launch quantisation, as Live numbers it.</summary>
-    public int LaunchQuantisation { get; init; }
+    /// <summary>The clip's launch quantization, as Live numbers it.</summary>
+    public int LaunchQuantization { get; init; }
 }
