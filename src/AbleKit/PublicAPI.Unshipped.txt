@@ -330,7 +330,7 @@ static AbleKit.Analysis.ClipColor.At(int row, int column) -> AbleKit.Analysis.Cl
 static AbleKit.Analysis.ClipColor.FromIndex(int index) -> AbleKit.Analysis.ClipColor
 static AbleKit.Analysis.ClipColor.operator !=(AbleKit.Analysis.ClipColor left, AbleKit.Analysis.ClipColor right) -> bool
 static AbleKit.Analysis.ClipColor.operator ==(AbleKit.Analysis.ClipColor left, AbleKit.Analysis.ClipColor right) -> bool
-static AbleKit.Analysis.ClipColor.Random.get -> AbleKit.Analysis.ClipColor
+static AbleKit.Analysis.ClipColor.Unset.get -> AbleKit.Analysis.ClipColor
 static AbleKit.Analysis.DefaultClip.operator !=(AbleKit.Analysis.DefaultClip? left, AbleKit.Analysis.DefaultClip? right) -> bool
 static AbleKit.Analysis.DefaultClip.operator ==(AbleKit.Analysis.DefaultClip? left, AbleKit.Analysis.DefaultClip? right) -> bool
 static AbleKit.Analysis.SampleOverview.FromSamples(System.ReadOnlySpan<float> samples, int channelCount) -> AbleKit.Analysis.SampleOverview!

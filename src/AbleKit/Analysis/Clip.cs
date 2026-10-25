@@ -49,9 +49,9 @@ public sealed record Clip
     public float PitchFine { get; init; }
 
     /// <summary>
-    /// The clip's color, a cell of Live's palette. <see cref="ClipColor.Random"/> before the first save.
+    /// The clip's color, a cell of Live's palette. <see cref="ClipColor.Unset"/> before the first save.
     /// </summary>
-    public ClipColor Color { get; init; } = ClipColor.Random;
+    public ClipColor Color { get; init; } = ClipColor.Unset;
 
     /// <summary>The clip's launch mode, as Live numbers it.</summary>
     public int LaunchMode { get; init; }

@@ -21,10 +21,10 @@ public sealed class ClipColorTests
         Assert.Throws<ArgumentOutOfRangeException>(() => ClipColor.At(row, column));
 
     [Fact]
-    public void Random_is_minus_one_and_is_what_an_unset_color_is() =>
+    public void Unset_is_minus_one_and_is_what_a_color_nobody_set_is() =>
         Assert.Equal(
             [-1, -1, -1],
-            [ClipColor.Random.Index, default(ClipColor).Index, new Clip().Color.Index]
+            [ClipColor.Unset.Index, default(ClipColor).Index, new Clip().Color.Index]
         );
 
     [Theory]
