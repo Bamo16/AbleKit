@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <Version>0.1.0-preview.1</Version>
+        <Version>0.1.0-preview.2</Version>
         <PackageId>AbleKit</PackageId>
         <Authors>Bamo16</Authors>
         <!-- AbleKit does not say Ableton, so the title, the description's opening and the tags carry it for NuGet search. -->
