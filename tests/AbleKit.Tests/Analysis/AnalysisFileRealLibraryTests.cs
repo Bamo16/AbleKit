@@ -28,14 +28,14 @@ public sealed class AnalysisFileRealLibraryTests
     }
 
     [Fact]
-    public void A_saved_warped_clip_and_warp_markers_come_together()
+    public void A_saved_clip_and_its_warp_markers_come_together()
     {
-        // A saved clip with Warp off needs no markers, and Live applies one as written.
+        // Live writes markers only with a saved clip, and never a saved clip without two, Warp on or off.
         var disagreeing = Warps()
             .Where(s =>
                 s.Analysis.DefaultClip is null
                     ? s.Analysis.Warp.Markers.Count > 0
-                    : s.Analysis.Warp is { IsWarped: true, Markers.Count: 0 }
+                    : s.Analysis.Warp.Markers.Count < 2
             )
             .Select(s => s.File)
             .ToList();
@@ -136,6 +136,9 @@ public sealed class AnalysisFileRealLibraryTests
             )
             .Where(file =>
                 File.ReadAllBytes(file) is var asd
+                // A saved clip without markers is never Live's, and the writer refuses it.
+                && AnalysisFile.Parse(asd)
+                    is not { IsDefaultClipSaved: true, Warp.Markers.Count: < 2 }
                 && !RoundTrip.Rewrite(asd).AsSpan().SequenceEqual(RoundTrip.WithFreshIds(asd))
             )
             .Select(Path.GetFileName)
