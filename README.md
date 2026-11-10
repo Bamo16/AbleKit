@@ -92,9 +92,8 @@ raised.Write(@"C:\Samples\Break (up 1).wav.asd");
 - **Writing a file back gives the bytes Live wrote**, checked against about a thousand real files.
   The one difference: list entries carry internal ids that record a file's editing history, and the
   writer numbers them afresh, as Live does for a new warp.
-- **It refuses what Live could not have written**, such as markers out of order, a saved clip with
-  fewer than two markers (Live has crashed on one with Warp off) or an overview of the wrong size,
-  with an `InvalidOperationException`, rather than leave Live to make sense of it.
+- **It refuses what Live could not have written**, such as markers out of order or an overview of the
+  wrong size, with an `InvalidOperationException`, rather than leave Live to make sense of it.
 - **It writes through a temporary file moved into place**, so Live never reads half a file. A file
   it cannot write throws an `IOException`, or an `UnauthorizedAccessException` where writing is not
   permitted, and nothing is written.
