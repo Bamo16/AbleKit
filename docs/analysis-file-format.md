@@ -148,7 +148,7 @@ Units of **beats** are positions on Live's grid, counted from the sample's beat 
 | `Sync` | bool | guessed: follows the set's tempo. True everywhere |
 | `HiQ` | bool | the HiQ switch (observed, 2026-10-01). Off on 12 of 981 files |
 | `Fade` | bool | the Fade switch (observed, 2026-10-01). Off in every library file |
-| `IsWarped` | bool | the clip's Warp switch. **Says nothing on its own**: it is true on files nobody has warped (observed), and true in every file Live wrote (1,368, measured 2026-11-10). A saved clip with it off and no markers has crashed Live: see [Writing one](#writing-one) |
+| `IsWarped` | bool | the clip's Warp switch. **Says nothing on its own**: it is true on files nobody has warped (observed). A saved clip with it off still carries two markers, and without them Live crashes: see [Writing one](#writing-one) |
 | `SampleVolume` | float32, linear | clip gain: 20 × log₁₀ of it is the clip view's dB. Whole decibels, −8 to +5, on the five of 981 files where it is not 1.0 (measured, 2026-10-01) |
 | `PitchCoarse`, `PitchFine` | float32 | transpose in semitones and detune in cents, the two boxes under the Pitch knob (observed, 2026-10-01). 0 in all 981 library files |
 | `VelocityAmount` | float32 | guessed by name: a Session clip's launch velocity. 0 everywhere |
@@ -275,7 +275,7 @@ nothing else changed.
 For audio Live has not seen, AbleKit computes the overview, records the transients a caller gives it
 and the file's size, and writes a head table of just 0 and the audio's length. The clip and warp
 can be Live's defaults, set by the caller, or a sibling's: another stem of the same song, warped and
-saved. A saved clip is written only with two or more markers, Warp on or off (below).
+saved. A saved clip is written only with two or more markers, Warp on or off: `Warp.Off` gives Live's pair for Warp off (below).
 
 What Live does with files it did not write (observed, 2026-09-15 to 2026-10-01):
 
@@ -306,18 +306,20 @@ What Live does with files it did not write (observed, 2026-09-15 to 2026-10-01):
   clips are moved, which is most likely its decoding cache.
 - **A marker list can be replaced in place.** Swapping one file's marker run and its id allocator
   for another's was enough; there are no offsets to fix.
-- **A saved clip with Warp off and no markers has crashed Live** (observed 2026-10-25, Live
-  12.4.7, Windows). Such a file beside each of three FLAC stems crashed Live on a click in the
-  browser, seven times across seven restarts, at the same instruction every time, reading through a
-  null object. Live had decoded the three stems into its cache twelve days before, and for the eight
-  days before the crash each had carried a file of the same writer, same overview and transients,
-  differing only in the clip: Warp on with two markers. Five other Warp-off files without markers,
-  whose audio Live decoded at the click, opened without a crash (observed 2026-10-25 and 2026-10-31),
-  so the cache may be part of it. Live itself never writes the shape: `IsWarped` is true, and a
-  saved clip has at least two markers, in all 1,368 files Live wrote on the author's machine
-  (measured 2026-11-10). The writer therefore refuses a saved clip with fewer than two markers
-  whatever the Warp switch says. Whether Live takes a saved clip with Warp off *and* two markers
-  as a Warp-off clip has not been checked.
+- **A saved clip with Warp off and no markers crashes Live** (confirmed 2026-11-10, Live 12.4.7,
+  Windows). Selecting the stem in the browser reads through a null object while walking the marker
+  list; the same file with the pair below added loaded without a crash and kept its saved clip
+  (+6 dB gain shown). It first crashed Live seven times on 2026-10-25, on three FLAC stems. Live
+  itself always writes a pair of markers, even with Warp off, with `MarkersGenerated` true: one at
+  the clip start in seconds, beat 0, and one 1/32 beat later at the set's tempo, beat 0.03125. A
+  clip starting at 22.0687449 s in a 174 BPM set gets 22.0687449 s / 0 and 22.0795206 s / 0.03125.
+  Turning Warp on later re-spaces the pair to the arrangement's tempo (0.0118671 s apart at 158
+  BPM), so the spacing barely matters. A saved clip in every file Live wrote on the author's
+  machine has at least two markers (1,368 files, measured 2026-11-10). The writer therefore refuses
+  a saved clip with fewer than two markers whatever the Warp switch says, and `Warp.Off` builds
+  the pair for a clip with Warp off. Evidence: five Warp-off files without markers opened without a
+  crash when Live decoded their audio at the click (observed 2026-10-25 and 2026-10-31), so the
+  decoding cache may be part of the trigger.
 
 **Live never analyzes a file nobody has opened**: 75 of the 96 audio files in a staging folder
 had no analysis file (measured, 2026-10-01). Making a sample arrive warped therefore means writing
@@ -333,8 +335,6 @@ so a sibling's warp still lines up as long as the stems start together.
   Complex mode; whether Beats mode or auto-warp uses it has not been tried.
 - The meaning of the fixed fields guessed above, and the warp mode numbers other than 0, 3, 4 and 6
   (Beats, Re-Pitch, Complex and Complex Pro; Beats and Re-Pitch observed 2026-10-01).
-- Whether Live ever writes `IsWarped` false: it has not in 1,368 files. What Live does with a
-  saved clip that has Warp off and two markers, the one Warp-off shape the writer allows.
 - What makes Live fill in `AufTaktData`. The writer keeps the sibling's, as harmless (observed).
 - Anything about Live 11 and earlier. DBraun/AbletonParsing reads Live 9 and 10, whose files are
   laid out differently.

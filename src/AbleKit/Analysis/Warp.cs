@@ -49,6 +49,38 @@ public sealed record Warp
     public float ComplexProEnvelope { get; init; } = 128;
 
     /// <summary>
+    /// A saved clip's Warp switched off the way Live writes it: the pair of markers Live keeps at the
+    /// clip start, 1/32 beat apart at <paramref name="tempo"/>. Live crashes on a saved clip without them.
+    /// </summary>
+    /// <param name="clipStart">Where the clip starts in the audio, in seconds.</param>
+    /// <param name="tempo">The set's tempo in BPM, which sets only the pair's spacing.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="clipStart"/> is negative or not finite, or <paramref name="tempo"/> is not a
+    /// finite number above 0.
+    /// </exception>
+    public static Warp Off(double clipStart, double tempo = 120)
+    {
+        if (clipStart is < 0 || !double.IsFinite(clipStart))
+            throw new ArgumentOutOfRangeException(
+                nameof(clipStart),
+                clipStart,
+                "must be 0 or more"
+            );
+
+        if (tempo is <= 0 || !double.IsFinite(tempo))
+            throw new ArgumentOutOfRangeException(nameof(tempo), tempo, "must be above 0");
+
+        const double Beat = 1.0 / 32;
+
+        return new()
+        {
+            IsWarped = false,
+            MarkersGenerated = true,
+            Markers = [new(clipStart, 0), new(clipStart + Beat * 60 / tempo, Beat)],
+        };
+    }
+
+    /// <summary>
     /// Where <paramref name="beat"/> falls in the audio, extending the first and last segments past
     /// the markers. Null with fewer than two markers.
     /// </summary>

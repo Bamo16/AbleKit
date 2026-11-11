@@ -310,10 +310,11 @@ internal static class AnalysisFileSerializer
     {
         var markers = analysis.Warp.Markers;
 
-        // Live ignores a saved clip with Warp on and no markers, and crashes on one with Warp off.
+        // Live ignores a saved clip with Warp on and no markers, and crashes on one with Warp off;
+        // it writes Warp off with a pair of markers at the clip start (Warp.Off).
         if (analysis is { IsDefaultClipSaved: true, Warp.Markers.Count: < 2 })
             throw new InvalidOperationException(
-                "a saved clip needs at least 2 warp markers, with Warp on or off: Live ignores one without with Warp on, and has crashed on one with Warp off"
+                "a saved clip needs at least 2 warp markers even with Warp off, and Live crashes without them: use Warp.Off(clipStart, tempo) for a clip with Warp off"
             );
 
         for (var i = 1; i < markers.Count; i++)

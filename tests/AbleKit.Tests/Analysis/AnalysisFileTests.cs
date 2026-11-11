@@ -314,6 +314,22 @@ public sealed class AnalysisFileTests : IDisposable
     }
 
     [Fact]
+    public void A_saved_clip_with_Warp_off_written_with_Warp_Off_round_trips()
+    {
+        var clicks = Clicks();
+        var unwarped = clicks with { IsDefaultClipSaved = true, Warp = Warp.Off(22.0687449, 174) };
+        var path = Path.Combine(_root, "warp-off.asd");
+
+        unwarped.Write(path);
+
+        var written = AnalysisFile.Read(path);
+        Assert.False(written.Warp.IsWarped);
+        Assert.True(written.Warp.MarkersGenerated);
+        Assert.Equal(unwarped.Warp.Markers, written.Warp.Markers);
+        Assert.Equal(unwarped.Warp, written.Warp with { Markers = unwarped.Warp.Markers });
+    }
+
+    [Fact]
     public void A_clip_that_is_not_saved_is_written_without_markers()
     {
         var clicks = Clicks();

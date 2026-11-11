@@ -15,6 +15,39 @@ public sealed class WarpTests
     }
 
     [Fact]
+    public void Off_gives_the_pair_Live_writes_at_the_clip_start()
+    {
+        var warp = AbleKit.Analysis.Warp.Off(22.0687449, 174);
+
+        Assert.False(warp.IsWarped);
+        Assert.True(warp.MarkersGenerated);
+        Assert.Equal(new WarpMarker(22.0687449, 0), warp.Markers[0]);
+        Assert.Equal(2, warp.Markers.Count);
+        Assert.Equal(22.0795206, warp.Markers[1].Seconds, 6);
+        Assert.Equal(0.03125, warp.Markers[1].Beat);
+    }
+
+    [Fact]
+    public void Off_spaces_the_pair_at_a_hundred_and_twenty_unless_told_otherwise()
+    {
+        var warp = AbleKit.Analysis.Warp.Off(1);
+
+        Assert.Equal(1 + 1.0 / 64, warp.Markers[1].Seconds, 12);
+        Assert.Equal(120, warp.TempoAt(1)!.Value, 9);
+    }
+
+    [Theory]
+    [InlineData(-1, 120)]
+    [InlineData(double.NaN, 120)]
+    [InlineData(0, 0)]
+    [InlineData(0, -5)]
+    [InlineData(0, double.PositiveInfinity)]
+    public void Off_refuses_a_start_or_tempo_that_cannot_be_real(double clipStart, double tempo) =>
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            AbleKit.Analysis.Warp.Off(clipStart, tempo)
+        );
+
+    [Fact]
     public void Four_beats_across_two_seconds_is_a_hundred_and_twenty()
     {
         var warp = Warp(new WarpMarker(0, 0), new WarpMarker(2, 4));

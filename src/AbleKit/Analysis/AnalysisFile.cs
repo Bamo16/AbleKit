@@ -106,8 +106,8 @@ public sealed record AnalysisFile
     /// </summary>
     /// <exception cref="InvalidOperationException">
     /// The file holds something Live could not have written, such as a saved clip with fewer than 2
-    /// warp markers, which Live ignores with Warp on and has crashed on with Warp off; see
-    /// <see cref="ToBytes"/>. Nothing is written.
+    /// warp markers, which Live ignores with Warp on and crashes on with Warp off (<see cref="Warp.Off"/>
+    /// builds the markers Live writes then); see <see cref="ToBytes"/>. Nothing is written.
     /// </exception>
     /// <exception cref="DirectoryNotFoundException">The folder is not there. Nothing is written.</exception>
     /// <exception cref="IOException">The file is locked by another program. Nothing is written.</exception>
@@ -137,8 +137,8 @@ public sealed record AnalysisFile
     /// </summary>
     /// <exception cref="InvalidOperationException">
     /// The markers do not advance, a saved clip has fewer than 2 markers whether Warp is on or off
-    /// (Live ignores the one and has crashed on the other), the transients go backwards, or the
-    /// overview is not one Live could draw.
+    /// (Live ignores the one and crashes on the other; <see cref="Warp.Off"/> builds the pair Live
+    /// writes with Warp off), the transients go backwards, or the overview is not one Live could draw.
     /// </exception>
     public byte[] ToBytes() => AnalysisFileSerializer.Serialize(this);
 }

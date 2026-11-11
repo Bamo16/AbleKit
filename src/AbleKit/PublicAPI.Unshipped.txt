@@ -149,6 +149,7 @@ AbleKit.Analysis.Warp.FluctuationTexture.get -> float
 AbleKit.Analysis.Warp.FluctuationTexture.init -> void
 AbleKit.Analysis.Warp.GranularityTexture.get -> float
 AbleKit.Analysis.Warp.GranularityTexture.init -> void
+static AbleKit.Analysis.Warp.Off(double clipStart, double tempo = 120) -> AbleKit.Analysis.Warp!
 AbleKit.Analysis.Warp.GranularityTones.get -> float
 AbleKit.Analysis.Warp.GranularityTones.init -> void
 AbleKit.Analysis.Warp.IsWarped.get -> bool
