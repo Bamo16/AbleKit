@@ -270,9 +270,14 @@ public sealed class AnalysisFileTests : IDisposable
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    public void A_warped_saved_clip_with_fewer_than_two_markers_is_refused(int markers)
+    [InlineData(true, 0)]
+    [InlineData(true, 1)]
+    [InlineData(false, 0)]
+    [InlineData(false, 1)]
+    public void A_saved_clip_with_fewer_than_two_markers_is_refused_with_Warp_on_or_off(
+        bool warped,
+        int markers
+    )
     {
         var clicks = Clicks();
         var invalid = clicks with
@@ -280,7 +285,7 @@ public sealed class AnalysisFileTests : IDisposable
             IsDefaultClipSaved = true,
             Warp = clicks.Warp with
             {
-                IsWarped = true,
+                IsWarped = warped,
                 Markers = [.. clicks.Warp.Markers.Take(markers)],
             },
         };
@@ -291,13 +296,13 @@ public sealed class AnalysisFileTests : IDisposable
     }
 
     [Fact]
-    public void An_unwarped_saved_clip_without_markers_is_written()
+    public void A_saved_clip_with_Warp_off_keeps_its_markers()
     {
         var clicks = Clicks();
         var unwarped = clicks with
         {
             IsDefaultClipSaved = true,
-            Warp = clicks.Warp with { IsWarped = false, Markers = [] },
+            Warp = clicks.Warp with { IsWarped = false },
         };
         var path = Path.Combine(_root, "unwarped.asd");
 
@@ -305,7 +310,7 @@ public sealed class AnalysisFileTests : IDisposable
 
         var written = AnalysisFile.Read(path);
         Assert.False(written.Warp.IsWarped);
-        Assert.Empty(written.Warp.Markers);
+        Assert.Equal(clicks.Warp.Markers, written.Warp.Markers);
     }
 
     [Fact]
