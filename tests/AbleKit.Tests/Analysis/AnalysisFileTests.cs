@@ -350,6 +350,71 @@ public sealed class AnalysisFileTests : IDisposable
     private static AnalysisFile Clicks() =>
         AnalysisFile.Parse(File.ReadAllBytes(ClickTrack.Fixture("sidecar-clicks.asd")));
 
+    [Fact]
+    public void Every_clip_setting_changed_from_its_default_reads_back_as_set()
+    {
+        Assert.True(
+            AnalysisFile.TryParse(
+                File.ReadAllBytes(ClickTrack.Fixture("sidecar-clicks.asd")),
+                out var analysis
+            )
+        );
+        var clip = new Clip
+        {
+            LoopStart = 1.5,
+            LoopEnd = 9.25,
+            SampleOffset = 0.5,
+            HiddenLoopStart = 2,
+            HiddenLoopEnd = 8,
+            OutMarker = 9.25,
+            LoopOn = false,
+            Sync = false,
+            HiQ = false,
+            Fade = true,
+            SampleVolume = 0.25f,
+            VelocityAmount = 0.5f,
+            PitchCoarse = -7,
+            PitchFine = 33.5f,
+            Color = ClipColor.At(3, 9),
+            LaunchMode = 2,
+            LaunchQuantization = 5,
+        };
+
+        Assert.True(
+            AnalysisFile.TryParse((analysis with { Clip = clip }).ToBytes(), out var reread)
+        );
+        Assert.Equal(clip, reread.Clip);
+    }
+
+    [Fact]
+    public void Every_warp_setting_changed_from_its_default_reads_back_as_set()
+    {
+        Assert.True(
+            AnalysisFile.TryParse(
+                File.ReadAllBytes(ClickTrack.Fixture("sidecar-clicks.asd")),
+                out var analysis
+            )
+        );
+        var warp = analysis.Warp with
+        {
+            Mode = WarpMode.Texture,
+            TransientResolution = 3,
+            TransientLoopMode = 1,
+            TransientEnvelope = 40,
+            GranularityTones = 12.5f,
+            GranularityTexture = 80,
+            FluctuationTexture = 55,
+            ComplexProFormants = 70,
+            ComplexProEnvelope = 64,
+        };
+
+        Assert.True(
+            AnalysisFile.TryParse((analysis with { Warp = warp }).ToBytes(), out var reread)
+        );
+        Assert.Equal(warp with { Markers = [] }, reread.Warp with { Markers = [] });
+        Assert.Equal(warp.Markers, reread.Warp.Markers);
+    }
+
     private string Copy(string fixture)
     {
         var path = Path.Combine(_root, fixture);
