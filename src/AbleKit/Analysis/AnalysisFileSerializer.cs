@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -383,13 +384,13 @@ internal static class AnalysisFileSerializer
     /// <summary>Little-endian values, but class names with a big-endian length, as the format has them.</summary>
     private sealed class FileWriter
     {
-        private readonly MemoryStream _stream = new();
+        private readonly ArrayBufferWriter<byte> _buffer = new();
 
-        public byte[] ToArray() => _stream.ToArray();
+        public byte[] ToArray() => _buffer.WrittenSpan.ToArray();
 
-        public void Byte(byte value) => _stream.WriteByte(value);
+        public void Byte(byte value) => _buffer.Write([value]);
 
-        public void Bytes(ReadOnlySpan<byte> bytes) => _stream.Write(bytes);
+        public void Bytes(ReadOnlySpan<byte> bytes) => _buffer.Write(bytes);
 
         public void Bool(bool value) => Byte(value ? (byte)1 : (byte)0);
 
