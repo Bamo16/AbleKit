@@ -27,3 +27,7 @@ dotnet_code_quality.CA1826.exclude_ordefault_methods = true
 [tests/**.cs]
 # Inline arrays in test data are clearer than hoisting each into a static field.
 dotnet_diagnostic.CA1861.severity = none
+# Test names are sentences, so underscores are the style.
+dotnet_diagnostic.CA1707.severity = none
+# Caching a CompositeFormat for a test's one-off format string is noise.
+dotnet_diagnostic.CA1863.severity = none
