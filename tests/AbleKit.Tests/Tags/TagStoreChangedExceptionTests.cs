@@ -9,7 +9,7 @@ public sealed class TagStoreChangedExceptionTests
     {
         var ex = new TagStoreChangedException();
 
-        Assert.IsAssignableFrom<IOException>(ex);
+        Assert.IsType<IOException>(ex, exactMatch: false);
         Assert.Equal("The tag store changed while it was being read or written.", ex.Message);
         Assert.Null(ex.InnerException);
     }
