@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace AbleKit.Analysis;
 
 /// <summary>
@@ -10,6 +12,11 @@ public readonly record struct ClipColor
     private const int Columns = 14;
 
     // Stored one up, so that default(ClipColor) is Unset, as Clip.Color's default is.
+    [SuppressMessage(
+        "Style",
+        "IDE0032:Use auto property",
+        Justification = "Stored one up so default(ClipColor) is Unset; Index decodes it."
+    )]
     private readonly int _indexPlusOne;
 
     private ClipColor(int index) => _indexPlusOne = index + 1;
