@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -246,7 +247,10 @@ public sealed class FolderInfoWriter
     /// <summary>Ableton stamps this on every write; a file it wrote never lacks one.</summary>
     private static void Stamp(XDocument document)
     {
-        var now = DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm:sszzz");
+        var now = DateTimeOffset.Now.ToString(
+            "yyyy-MM-ddTHH:mm:sszzz",
+            CultureInfo.InvariantCulture
+        );
         var description = document.Descendants(Rdf + "Description").First();
 
         if (description.Element(Xmp + "MetadataDate") is { } existing)
